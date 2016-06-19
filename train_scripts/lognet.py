@@ -4,7 +4,7 @@ from keras.layers.convolutional import MaxPooling2D
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam
 
 import numpy as np
 import theano as th
@@ -92,14 +92,12 @@ model.add(Dense(4))
 model.add(Activation('softmax'))
 
 
-
-
 # compile model
-sgd = SGD(lr=0.5)
+sgd = SGD(lr=0.25)
+adam = Adam(lr=0.1)
 
 
-
-model.compile(optimizer=sgd,
+model.compile(optimizer='rmsprop',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
@@ -109,12 +107,12 @@ model.compile(optimizer=sgd,
 
 
 print "loading train"
-trainX = pkl.load(open("trainX.pkl"))
+trainX = pkl.load(open("../data/pkl/trainX.pkl"))
 print "done loading train"
 
 
 trainX=trainX.transpose(0,3,1,2)
 
-trainY = pkl.load(open("trainY.pkl"))
+trainY = pkl.load(open("../data/pkl/trainY.pkl"))
 
-model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=25)
+model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=35)
