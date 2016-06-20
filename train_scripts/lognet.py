@@ -119,6 +119,8 @@ trainY = pkl.load(open("../data/pkl/trainY.pkl"))
 
 model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=300)
 
+testX = pkl.load(open("../data/pkl/testX.pkl"))
+
 results = np.argmax(model.predict(testX),axis=-1) +1
 
-subtools.create_submision(results,sub=300)
+subtools.create_submision(results,sub=200)
