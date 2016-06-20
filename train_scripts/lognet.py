@@ -115,4 +115,4 @@ trainX=trainX.transpose(0,3,1,2)
 
 trainY = pkl.load(open("../data/pkl/trainY.pkl"))
 
-model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=100)
+model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=200)
