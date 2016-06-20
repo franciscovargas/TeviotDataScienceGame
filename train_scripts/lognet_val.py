@@ -77,14 +77,14 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 
 
 # model.add(Convolution2D(nb_filter=10,border_mode='valid',
-#                         nb_row=5, nb_col=5,))
+#                         nb_row=5, nb_col=5,W_regularizer=l2(0.01)))
 # model.add(Activation('relu'))
 # model.add(MaxPooling2D(pool_size=(2, 2)))
 
 
 model.add(Flatten())
 # MLP
-model.add(Dense(200, ))
+model.add(Dense(200, W_regularizer=l2(0.01) ))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
 
@@ -123,5 +123,5 @@ X_train, X_test, y_train, y_test = train_test_split(trainX, trainY-1,
                                                     random_state=42)
 print "percentage split done"
 
-model.fit(X_train, to_categorical(y_train,4) , batch_size=100, nb_epoch=35)
-model.evaluate(X_test, to_categorical(y_test,4), batch_size=100)
+model.fit(X_train, to_categorical(y_train,4) , batch_size=100, nb_epoch=45)
+print model.evaluate(X_test, to_categorical(y_test,4), batch_size=100)

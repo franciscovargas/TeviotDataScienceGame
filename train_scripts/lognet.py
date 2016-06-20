@@ -10,7 +10,7 @@ import numpy as np
 import theano as th
 
 from keras.utils.np_utils import to_categorical
-
+from keras.regularizers import l2
 
 import cPickle as pkl
 
@@ -69,7 +69,7 @@ model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Convolution2D(nb_filter=32,border_mode='valid',
-                        nb_row=5, nb_col=5,))
+                        nb_row=5, nb_col=5,W_regularizer=l2(0.01)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -82,7 +82,7 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
 # MLP
-model.add(Dense(200))
+model.add(Dense(200,W_regularizer=l2(0.01)))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
 
@@ -115,4 +115,4 @@ trainX=trainX.transpose(0,3,1,2)
 
 trainY = pkl.load(open("../data/pkl/trainY.pkl"))
 
-model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=35)
+model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=50)
