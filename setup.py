@@ -12,9 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='teviot',
-
     version='1.0',
-
     description='dsg 2k16 UoE entry imagenet like challenge repo',
     long_description=long_description,
 
