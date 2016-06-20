@@ -14,6 +14,8 @@ from keras.regularizers import l2
 
 import cPickle as pkl
 
+from  dutils import subtools
+
 LoG = np.array([[0, 1,0],
                 [1,-4,1],
                 [0, 1,0]])
@@ -115,4 +117,8 @@ trainX=trainX.transpose(0,3,1,2)
 
 trainY = pkl.load(open("../data/pkl/trainY.pkl"))
 
-model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=200)
+model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=300)
+
+results = np.argmax(model.predict(testX),axis=-1) +1
+
+subtools.create_submision(results,sub=300)

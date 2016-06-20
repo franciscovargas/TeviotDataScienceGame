@@ -1,0 +1,8 @@
+keras
+theano
+pandas
+numpy
+scikit-image
+
+[dev]
+check-manifest
