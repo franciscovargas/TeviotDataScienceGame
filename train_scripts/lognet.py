@@ -16,6 +16,9 @@ import cPickle as pkl
 
 from  dutils import subtools
 
+from keras.preprocessing.image import  ImageDataGenerator
+
+
 LoG = np.array([[0, 1,0],
                 [1,-4,1],
                 [0, 1,0]])
@@ -116,10 +119,16 @@ print "done loading train"
 trainX=trainX.transpose(0,3,1,2)
 
 trainY = pkl.load(open("../data/pkl/trainY.pkl"))
-
-model.fit(trainX, to_categorical(trainY-1,4) , batch_size=100, nb_epoch=300)
+datagen = ImageDataGenerator(
+        horizontal_flip=True, rotation_range=5)
+datagen.fit(trainX)
+print "GENERATED"
+generator = datagen.flow(trainX, to_categorical(trainY-1,4) , batch_size=32)
+model.fit_generator(generator,
+                    samples_per_epoch=len(trainX), nb_epoch=60)
 
 testX = pkl.load(open("../data/pkl/testX.pkl"))
+testX=testX.transpose(0,3,1,2)
 
 results = np.argmax(model.predict(testX),axis=-1) +1
 

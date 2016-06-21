@@ -11,7 +11,7 @@ Description: # TeviotDataScienceGame
         In order to install this project such that the imports work do the following command
         on DICE machines (within the root directory of this project)
         
-            pip install --user .
+            pip install --user -e .
         
 Keywords: datascience machine learning probability imagenet convolutional
 Platform: UNKNOWN
