@@ -1,5 +1,6 @@
 keras
 theano
 pandas
-numpy
+# numpy
 scikit-image
+scipy

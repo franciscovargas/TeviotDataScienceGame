@@ -4,3 +4,4 @@ notebooks/.ipynb_checkpoints
 *.pyc
 data/pkl/*.csv
 *.~lock
+train_scripts/vgg16_weights.h5
