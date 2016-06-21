@@ -130,7 +130,8 @@ datagen.fit(X_train)
 print "GENERATED"
 generator = datagen.flow(X_train, to_categorical(y_train,4) , batch_size=32)
 model.fit_generator(generator,
-                    samples_per_epoch=len(X_train), nb_epoch=45)
+                    samples_per_epoch=len(X_train), nb_epoch=45,
+                    validation_data=(X_test, to_categorical(y_test,4)))
 
 
 
