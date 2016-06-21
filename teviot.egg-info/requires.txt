@@ -1,8 +1,0 @@
-keras
-theano
-pandas
-scikit-image
-scipy
-
-[dev]
-check-manifest

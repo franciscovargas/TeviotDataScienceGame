@@ -74,7 +74,7 @@ model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Convolution2D(nb_filter=32,border_mode='valid',
-                        nb_row=5, nb_col=5,W_regularizer=l2(0.01)))
+                        nb_row=5, nb_col=5))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -87,7 +87,7 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
 # MLP
-model.add(Dense(200,W_regularizer=l2(0.01)))
+model.add(Dense(200))
 model.add(Activation('relu'))
 model.add(Dropout(0.5))
 
