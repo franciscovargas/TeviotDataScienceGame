@@ -125,7 +125,7 @@ datagen.fit(trainX)
 print "GENERATED"
 generator = datagen.flow(trainX, to_categorical(trainY-1,4) , batch_size=32)
 model.fit_generator(generator,
-                    samples_per_epoch=len(trainX), nb_epoch=60)
+                    samples_per_epoch=len(trainX), nb_epoch=25)
 
 testX = pkl.load(open("../data/pkl/testX.pkl"))
 testX=testX.transpose(0,3,1,2)
