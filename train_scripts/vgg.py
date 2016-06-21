@@ -15,7 +15,7 @@ import h5py
 
 def VGG_16(weights_path=None):
     model = Sequential()
-    model.add(ZeroPadding2D((1,1),input_shape=(3,64,64)))
+    model.add(ZeroPadding2D(((226 -64)/2,(226 -64)/2),input_shape=(3,64,64)))
     model.add(Convolution2D(64, 3, 3, activation='relu'))
     model.add(ZeroPadding2D((1,1)))
     model.add(Convolution2D(64, 3, 3, activation='relu'))
@@ -60,7 +60,7 @@ def VGG_16(weights_path=None):
 
     f = h5py.File(weights_path)
     for k in range(f.attrs['nb_layers']):
-        if k >= len(model.layers) or k==0:
+        if k >= len(model.layers):
             # we don't look at the last (fully-connected) layers in the savefile
             break
         g = f['layer_{}'.format(k)]
@@ -117,5 +117,5 @@ X_train, X_test, y_train, y_test = train_test_split(trainX, trainY-1,
                                                     random_state=42)
 print "percentage split done"
 
-model.fit(X_train, to_categorical(y_train,4) , batch_size=100, nb_epoch=45)
+model.fit(X_train, to_categorical(y_train,4) , batch_size=100, nb_epoch=45, validation_data=(X_test,to_categorical(y_test,4)) )
 print model.evaluate(X_test, to_categorical(y_test,4), batch_size=100)
