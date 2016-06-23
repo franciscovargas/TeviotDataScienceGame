@@ -5,3 +5,7 @@ notebooks/.ipynb_checkpoints
 data/pkl/*.csv
 *.~lock
 train_scripts/vgg16_weights.h5
+venv
+repos
+teviot.egg-info
+train_scripts/train.npy
