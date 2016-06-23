@@ -9,3 +9,4 @@ venv
 repos
 teviot.egg-info
 train_scripts/train.npy
+token
