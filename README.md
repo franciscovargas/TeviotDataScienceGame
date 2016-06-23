@@ -11,7 +11,7 @@ There is a script provided to use all of ashburys cores:
     chmod a+x install.sh
     ./install.sh
     export OMP_NUM_THREADS=40
-    . core3/bin/acitivate
+    . cord3/core3/bin/acitivate
 
 This creates a venv valled core3 inside a folder called cord3. 
 
