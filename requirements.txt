@@ -1,6 +1,8 @@
+cython
 keras
 theano
 pandas
 # numpy
 scikit-image
+scikit-learn
 # scipy
