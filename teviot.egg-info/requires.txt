@@ -1,6 +1,7 @@
 keras
 theano
 pandas
-# numpy
 scikit-image
-# scipy
+
+[dev]
+check-manifest

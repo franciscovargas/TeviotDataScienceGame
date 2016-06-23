@@ -1,0 +1,12 @@
+dutils/__init__.py
+dutils/subtools.py
+teviot.egg-info/PKG-INFO
+teviot.egg-info/SOURCES.txt
+teviot.egg-info/dependency_links.txt
+teviot.egg-info/requires.txt
+teviot.egg-info/top_level.txt
+train_scripts/__init__.py
+train_scripts/lognet.py
+train_scripts/lognet_val.py
+train_scripts/run_model.py
+train_scripts/vgg.py

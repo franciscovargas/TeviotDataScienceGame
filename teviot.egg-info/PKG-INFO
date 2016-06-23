@@ -1,0 +1,22 @@
+Metadata-Version: 1.1
+Name: teviot
+Version: 1.0
+Summary: dsg 2k16 UoE entry imagenet like challenge repo
+Home-page: https://github.com/franciscovargas/TeviotDataScienceGame.git
+Author: Francisco Vargas
+Author-email: vargfran@gmail.com
+License: MIT
+Description: # TeviotDataScienceGame
+        This repository is for the edinburgh university data science game entry.
+        In order to install this project such that the imports work do the following command
+        on DICE machines (within the root directory of this project)
+        
+            pip install --user -e .
+        
+Keywords: datascience machine learning probability imagenet convolutional
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers, Users
+Classifier: Topic :: Data Science Game, UoE entry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 2.7

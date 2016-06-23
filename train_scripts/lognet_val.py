@@ -72,7 +72,7 @@ model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Convolution2D(nb_filter=32,border_mode='valid',
-                        nb_row=5, nb_col=5,))
+                        nb_row=5, nb_col=5))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -125,7 +125,7 @@ X_train, X_test, y_train, y_test = train_test_split(trainX, trainY-1,
 print "percentage split done"
 
 datagen = ImageDataGenerator(
-        horizontal_flip=True, rotation_range=5)
+        horizontal_flip=True, rotation_range=5,zoom_range=0.2,zca_whitening=True)
 datagen.fit(X_train)
 print "GENERATED"
 generator = datagen.flow(X_train, to_categorical(y_train,4) , batch_size=32)
