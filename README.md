@@ -19,7 +19,9 @@ This creates a venv valled core3 inside a folder called cord3.
 
 After installing openblass/numpy install this project such that the imports work do the following command
 on DICE machines (within the root directory of this project)
-
+    # inside virtual env locally with BLAS numpy preinstals
+    pip install -e .
+    # or globally in dice but without BLAS/Numpy core config facility
     pip install --user -e .
 
 All this within the virtualenv you are now ready to train the current keras models in train_scripts using all 
