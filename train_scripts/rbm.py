@@ -34,15 +34,6 @@ def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), border_mode='same'))
 
-    # x = Convolution2D(5, 11, 11, activation='relu', border_mode='same')(input_img)
-    # x = MaxPooling2D((2, 2), border_mode='same')(x)
-    # x = Convolution2D(8, 5, 5, activation='relu', border_mode='same')(x)
-    # x = MaxPooling2D((2, 2), border_mode='same')(x)
-    # x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(x)
-    # encoded = MaxPooling2D((2, 2), border_mode='same')(x)
-
-    # at this point the representation is (8, 12, 12) i.e. 1152
-
     # Convolution 4
     model.add(Convolution2D(16, 3, 3, border_mode='same'))
     model.add(Activation('relu'))
@@ -60,14 +51,6 @@ def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
 
     # Convolution 7
     model.add(Convolution2D(3, 1, 1, border_mode='same'))
-
-    # x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(encoded)
-    # x = UpSampling2D((2, 2))(x)
-    # x = Convolution2D(8, 5, 5, activation='relu', border_mode='same')(x)
-    # x = UpSampling2D((2, 2))(x)
-    # x = Convolution2D(5, 11, 11, activation='relu', border_mode='same')(x)
-    # x = UpSampling2D((2, 2))(x)
-    # decoded = Convolution2D(3, 3, 3, activation='sigmoid', border_mode='same')(x)
 
     # autoencoder = Model(input_img, decoded)
     if wfile:

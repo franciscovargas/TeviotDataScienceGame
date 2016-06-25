@@ -12,6 +12,7 @@ import numpy as np
 import logging, logging.config, yaml
 
 from rbm import create_deep_rbm
+from subtools import create_submision
 
 
 with open ( 'logging.yaml', 'rb' ) as config:
@@ -22,15 +23,13 @@ with open ( 'logging.yaml', 'rb' ) as config:
 rbm_weights = 'autoencoder_weights.h5'
 aft_weights = 'rbm_finetune_weights.h5'
 
-def create_model(input_shape=(3, 64, 64), wfile=None):
+def create_model(input_shape=(3, 64, 64), wfile=None, mfile=None):
 
-    model = create_deep_rbm(Input(shape=input_shape), wfile)
-    with open( 'rbm.config', 'rb' ) as f:
-        model = Sequential.from_config(f.read())
+    model = create_deep_rbm(input_shape, wfile)
 
     logger.debug('NUMBER OF LAYERS before pop = %d.' % len(model.layers))
 
-    for i in xrange(len(model.layers)/2+1):
+    for i in xrange((len(model.layers)+1)/2):
         pop_layer(model)
 
     logger.debug('NUMBER OF LAYERS after pop = %d.' % len(model.layers))
@@ -45,6 +44,10 @@ def create_model(input_shape=(3, 64, 64), wfile=None):
     #Classification Layer
     model.add(Dense(4))
     model.add(Activation('softmax'))
+
+    if mfile:
+        logger.debug( 'LOADING WEIGHTS from file: %s.' % mfile )
+        model.load_weights(mfile)
 
     # compile model
     model.compile(optimizer='rmsprop',
@@ -63,6 +66,23 @@ def pop_layer(model):
     model.layers[-1].outbound_nodes = []
 
 
+def get_results(model):
+    test = pkl.load(open("../data/pkl/test.npz" ))
+    # align dimensions such that channels are the
+    # second axis of the tensor
+    x_te = test['x'].transpose(0,3,1,2)
+    logger.debug('Predicting labels...')
+    results = np.argmax(model.predict(x_te),axis=-1) +1
+    return results
+
+
+def submit(model=None, sub=401):
+    if model is None:
+        model = create_model(mfile=aft_weights)
+    results = get_results(model)
+    logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
+    create_submision(results, sub)
+
 
 if __name__ == '__main__':
     logger.debug( "loading train" )
@@ -70,12 +90,10 @@ if __name__ == '__main__':
     # trainY = pkl.load(open("../data/pkl/trainY.pkl"))
     # np.savez_compressed('../data/pkl/train.npz', x=trainX, t=trainY)
     train = np.load('../data/pkl/train.npz')
-    x_tr = train['x']
+    x_tr=train['x'].transpose(0,3,1,2)
     y_tr = train['t']
 
     logger.debug( "done loading train" )
-
-    x_tr=x_tr.transpose(0,3,1,2)
 
     logger.debug( "percentage split start" )
     x_tr, x_te, y_tr, y_te = \
@@ -84,11 +102,12 @@ if __name__ == '__main__':
 
 
     model = create_model(wfile=rbm_weights)
+    # model = create_model(mfile=aft_weights)
 
-    datagen = ImageDataGenerator(
-            horizontal_flip=True, rotation_range=5,zoom_range=0.2)
+    datagen = ImageDataGenerator( vertical_flip=True,
+            horizontal_flip=True, rotation_range=5, zoom_range=0.2)
     datagen.fit(X_train)
-    print "GENERATED"
+    logger.debug( "GENERATED" )
     generator = datagen.flow(x_tr, to_categorical(y_tr,4) , batch_size=32)
     model.fit_generator(generator,
                         samples_per_epoch=len(x_tr), nb_epoch=50,
