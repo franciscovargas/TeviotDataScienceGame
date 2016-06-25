@@ -22,17 +22,17 @@ def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
     # Convolution 1
     model.add(Convolution2D(5, 11, 11, border_mode='same', input_shape=input_shape))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), border_mode='same'))
 
     # Convolution 2
     model.add(Convolution2D(8, 5, 5, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), border_mode='same'))
 
     # Convolution 3
     model.add(Convolution2D(16, 3, 3, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2), border_mode='same'))
 
     # x = Convolution2D(5, 11, 11, activation='relu', border_mode='same')(input_img)
     # x = MaxPooling2D((2, 2), border_mode='same')(x)
@@ -46,20 +46,20 @@ def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
     # Convolution 4
     model.add(Convolution2D(16, 3, 3, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(UpSampling2D((3, 3)))
+    model.add(UpSampling2D((2, 2)))
 
     # Convolution 5
     model.add(Convolution2D(8, 5, 5, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(UpSampling2D((3, 3)))
+    model.add(UpSampling2D((2, 2)))
 
     # Convolution 6
     model.add(Convolution2D(5, 11, 11, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(UpSampling2D((3, 3)))
+    model.add(UpSampling2D((2, 2)))
 
     # Convolution 7
-    model.add(Convolution2D(3, 3, 3, border_mode='same'))
+    model.add(Convolution2D(3, 1, 1, border_mode='same'))
 
     # x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(encoded)
     # x = UpSampling2D((2, 2))(x)
