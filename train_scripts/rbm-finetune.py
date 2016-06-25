@@ -1,10 +1,17 @@
-from keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D
+from keras.layers.convolutional import Convolution2D, MaxPooling2D, UpSampling2D
+from keras.layers import Input, Dense, Dropout, Activation, Flatten
 from keras.models import Model, Sequential
-from keras.callbacks import TensorBoard
+from keras.utils.np_utils import to_categorical
+from sklearn.cross_validation import train_test_split
+from keras.regularizers import l2
+from keras.preprocessing.image import  ImageDataGenerator
+
 import cPickle as pkl
 import h5py
 import numpy as np
 import logging, logging.config, yaml
+
+from dutils import slack
 
 with open ( 'logging.yaml', 'rb' ) as config:
     logging.config.dictConfig(yaml.load(config))
@@ -62,18 +69,20 @@ def create_model(input_img=Input(shape=(3, 64, 64)), wfile=None):
 
 if __name__ == '__main__':
     logger.debug( "loading train" )
-    trainX = pkl.load(open("../data/pkl/trainX.pkl"))
-    trainY = pkl.load(open("../data/pkl/trainY.pkl"))
-    np.savez_compressed('../data/pkl/train.npz', x=trainX, t=trainY)
-    # train = np.load('train.npz')
+    # trainX = pkl.load(open("../data/pkl/trainX.pkl"))
+    # trainY = pkl.load(open("../data/pkl/trainY.pkl"))
+    # np.savez_compressed('../data/pkl/train.npz', x=trainX, t=trainY)
+    train = np.load('../data/pkl/train.npz')
+    x_tr = train['x']
+    y_tr = train['y']
 
     logger.debug( "done loading train" )
 
-    trainX=trainX.transpose(0,3,1,2)
+    x_tr=x_tr.transpose(0,3,1,2)
 
     logger.debug( "percentage split start" )
-    X_train, X_test, y_train, y_test = \
-            train_test_split(trainX, trainY-1, test_size=0.33, random_state=42)
+    x_tr, x_te, y_tr, y_te = \
+            train_test_split(x_tr, y_tr-1, test_size=0.33, random_state=42)
     logger.debug( "percentage split done" )
 
 
@@ -81,6 +90,5 @@ if __name__ == '__main__':
 
     model.fit(trainX, trainX, nb_epoch=50, batch_size=128, shuffle=True,
             validation_data=(trainX,trainX))
-             # callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
 
     model.save_weights(aft_weights)
