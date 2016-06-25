@@ -46,6 +46,9 @@ def create_deep_rbm(input_img=Input(shape=(3, 64, 64)), wfile=None):
 
     logger.debug( 'DONE COMPILING' )
 
+    with open( 'rbm.config', 'wb' ) as f:
+        f.write(autoencoder.get_config())
+
     return autoencoder
 
 

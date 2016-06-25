@@ -25,6 +25,8 @@ aft_weights = 'rbm_finetune_weights.h5'
 def create_model(input_shape=(3, 64, 64), wfile=None):
 
     model = create_deep_rbm(Input(shape=input_shape), wfile)
+    with open( 'rbm.config', 'rb' ) as f:
+        model = Sequential.from_config(f.read())
 
     logger.debug('NUMBER OF LAYERS before pop = %d.' % len(model.layers))
 
