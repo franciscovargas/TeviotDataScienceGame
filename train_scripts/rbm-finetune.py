@@ -36,13 +36,20 @@ def create_model(input_shape=(3, 64, 64), wfile=None):
     if wfile:       # load the pretrained weights
         logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
         f = h5py.File(wfile)
-        for k in range(f.attrs['nb_layers']):
-            if k >= len(model.layers):
-                # we don't look at the last (fully-connected) layers in the savefile
-                break
-            g = f['layer_{}'.format(k)]
-            weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
-            model.layers[k].set_weights(weights)
+        logger.debug( 'NUMBER OF LAYERS = %d.' % len(model.layers) )
+        model.layers[0].set_weight(f['convolution2d_1'])
+        model.layers[1].set_weight(f['maxpooling2d_1'])
+        model.layers[2].set_weight(f['convolution2d_2'])
+        model.layers[3].set_weight(f['maxpooling2d_2'])
+        model.layers[4].set_weight(f['convolution2d_3'])
+        model.layers[5].set_weight(f['maxpooling2d_3'])
+        # for k in range(f.attrs['nb_layers']):
+        #     if k >= len(model.layers):
+        #         # we don't look at the last (fully-connected) layers in the savefile
+        #         break
+        #     g = f['layer_{}'.format(k)]
+        #     weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
+        #     model.layers[k].set_weights(weights)
 
 
     model.add(Flatten())
