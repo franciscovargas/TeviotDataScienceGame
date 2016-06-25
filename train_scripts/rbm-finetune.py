@@ -73,7 +73,7 @@ if __name__ == '__main__':
     # np.savez_compressed('../data/pkl/train.npz', x=trainX, t=trainY)
     train = np.load('../data/pkl/train.npz')
     x_tr = train['x']
-    y_tr = train['y']
+    y_tr = train['t']
 
     logger.debug( "done loading train" )
 
