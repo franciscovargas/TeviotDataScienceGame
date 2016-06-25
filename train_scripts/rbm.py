@@ -12,7 +12,7 @@ with open ( 'logging.yaml', 'rb' ) as config:
 
 weights_filename = 'autoencoder_weights.h5'
 
-def create_model(input_img=Input(shape=(3, 64, 64)), wfile=None):
+def create_deep_rbm(input_img=Input(shape=(3, 64, 64)), wfile=None):
 
     logger.debug( 'COMPILING' )
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     x_tr=x_tr.transpose(0,3,1,2)
     x_te=x_te.transpose(0,3,1,2)
 
-    model = create_model()
+    model = create_deep_rbm()
 
     logger.debug( 'FITTING TRAINING SET...')
     model.fit(x_tr, x_tr, nb_epoch=50, batch_size=128, shuffle=True,

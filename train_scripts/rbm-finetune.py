@@ -11,6 +11,8 @@ import h5py
 import numpy as np
 import logging, logging.config, yaml
 
+from rbm import create_deep_rbm
+
 
 with open ( 'logging.yaml', 'rb' ) as config:
     logging.config.dictConfig(yaml.load(config))
@@ -22,35 +24,14 @@ aft_weights = 'rbm_finetune_weights.h5'
 
 def create_model(input_shape=(3, 64, 64), wfile=None):
 
-    logger.debug( 'COMPILING' )
+    model = create_deep_rbm(Input(shape=input_shape), wfile)
 
-    model = Sequential()
-    model.add(Convolution2D(5, 11, 11, input_shape=input_shape,
-                activation='relu', border_mode='same'))
-    model.add(MaxPooling2D((2,2), strides=(2, 2), border_mode='same'))
-    model.add(Convolution2D(8, 5, 5, activation='relu', border_mode='same'))
-    model.add(MaxPooling2D((2,2), border_mode='same'))
-    model.add(Convolution2D(16, 3, 3, activation='relu', border_mode='same'))
-    model.add(MaxPooling2D((2,2), border_mode='same'))
+    logger.debug('NUMBER OF LAYERS before pop = %d.' % len(model.layers))
 
-    if wfile:       # load the pretrained weights
-        logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
-        f = h5py.File(wfile)
-        logger.debug( 'NUMBER OF LAYERS = %d.' % len(model.layers) )
-        model.layers[0].set_weights(f['convolution2d_1'])
-        model.layers[1].set_weights(f['maxpooling2d_1'])
-        model.layers[2].set_weights(f['convolution2d_2'])
-        model.layers[3].set_weights(f['maxpooling2d_2'])
-        model.layers[4].set_weights(f['convolution2d_3'])
-        model.layers[5].set_weights(f['maxpooling2d_3'])
-        # for k in range(f.attrs['nb_layers']):
-        #     if k >= len(model.layers):
-        #         # we don't look at the last (fully-connected) layers in the savefile
-        #         break
-        #     g = f['layer_{}'.format(k)]
-        #     weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
-        #     model.layers[k].set_weights(weights)
+    for i in xrange(len(model.layers)/2+1):
+        pop_layer(model)
 
+    logger.debug('NUMBER OF LAYERS after pop = %d.' % len(model.layers))
 
     model.add(Flatten())
     # MLP
@@ -71,6 +52,14 @@ def create_model(input_shape=(3, 64, 64), wfile=None):
     logger.debug( 'DONE COMPILING' )
 
     return model
+
+
+def pop_layer(model):
+    model.layers.pop() # Get rid of the classification layer
+    # model.layers.pop() # Get rid of the dropout layer
+    model.outputs = [model.layers[-1].output]
+    model.layers[-1].outbound_nodes = []
+
 
 
 if __name__ == '__main__':
