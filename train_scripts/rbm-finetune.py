@@ -11,7 +11,6 @@ import h5py
 import numpy as np
 import logging, logging.config, yaml
 
-from dutils import slack
 
 with open ( 'logging.yaml', 'rb' ) as config:
     logging.config.dictConfig(yaml.load(config))
