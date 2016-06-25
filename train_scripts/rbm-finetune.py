@@ -20,12 +20,12 @@ with open ( 'logging.yaml', 'rb' ) as config:
 rbm_weights = 'autoencoder_weights.h5'
 aft_weights = 'rbm_finetune_weights.h5'
 
-def create_model(input_img=Input(shape=(3, 64, 64)), wfile=None):
+def create_model(input_shape=(3, 64, 64), wfile=None):
 
     logger.debug( 'COMPILING' )
 
     model = Sequential()
-    model.add(Convolution2D(5, 11, 11, input_shape=shape,
+    model.add(Convolution2D(5, 11, 11, input_shape=input_shape,
                 activation='relu', border_mode='same'))
     model.add(MaxPooling2D((2,2), strides=(2, 2), border_mode='same'))
     model.add(Convolution2D(8, 5, 5, activation='relu', border_mode='same'))
@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
     model = create_model(wfile=rbm_weights)
 
-    model.fit(trainX, trainX, nb_epoch=50, batch_size=128, shuffle=True,
-            validation_data=(trainX,trainX))
+    model.fit(x_tr, y_tr, nb_epoch=50, batch_size=128, shuffle=True,
+            validation_data=(x_te,y_te))
 
     model.save_weights(aft_weights)
