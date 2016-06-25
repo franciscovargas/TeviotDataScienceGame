@@ -46,17 +46,17 @@ def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
     # Convolution 4
     model.add(Convolution2D(16, 3, 3, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(UpSampling2D((2, 2)))
+    model.add(UpSampling2D((3, 3)))
 
     # Convolution 5
     model.add(Convolution2D(8, 5, 5, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(UpSampling2D((2, 2)))
+    model.add(UpSampling2D((3, 3)))
 
     # Convolution 6
     model.add(Convolution2D(5, 11, 11, border_mode='same'))
     model.add(Activation('relu'))
-    model.add(UpSampling2D((2, 2)))
+    model.add(UpSampling2D((3, 3)))
 
     # Convolution 7
     model.add(Convolution2D(3, 3, 3, border_mode='same'))
@@ -89,10 +89,8 @@ def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
 if __name__ == '__main__':
     # load dataset
     logger.debug( "loading train" )
-    testX = pkl.load(open("../data/pkl/testX.pkl"))
-    np.savez_compressed('../data/pkl/test.npz', x=testX)
-    train = np.load(open("../data/pkl/train.npz"))
-    test = np.load('../data/pkl/test.npz')
+    train = np.load("../data/pkl/train.npz")
+    test = np.load("../data/pkl/test.npz")
     x_tr = train['x']
     x_te = test['x']
     logger.debug( "done loading train" )
