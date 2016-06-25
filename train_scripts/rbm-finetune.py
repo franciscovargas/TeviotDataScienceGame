@@ -34,8 +34,8 @@ def create_model(input_shape=(3, 64, 64), wfile=None):
     model.add(MaxPooling2D((2,2), border_mode='same'))
 
     if wfile:       # load the pretrained weights
-        logger.debug( 'Loading weights.' )
-        f = h5py.File(weights_path)
+        logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
+        f = h5py.File(wfile)
         for k in range(f.attrs['nb_layers']):
             if k >= len(model.layers):
                 # we don't look at the last (fully-connected) layers in the savefile
@@ -87,7 +87,18 @@ if __name__ == '__main__':
 
     model = create_model(wfile=rbm_weights)
 
-    model.fit(x_tr, y_tr, nb_epoch=50, batch_size=128, shuffle=True,
-            validation_data=(x_te,y_te))
+    datagen = ImageDataGenerator(
+            horizontal_flip=True, rotation_range=5,zoom_range=0.2)
+    datagen.fit(X_train)
+    print "GENERATED"
+    generator = datagen.flow(x_tr, to_categorical(y_tr,4) , batch_size=32)
+    model.fit_generator(generator,
+                        samples_per_epoch=len(x_tr), nb_epoch=50,
+                        validation_data=(x_te, to_categorical(y_te,4)))
 
+    logger.debug( 'SAVING WEIGHTS in file: %s' % aft_weights )
     model.save_weights(aft_weights)
+
+    logger.debug( model.evaluate(x_te, to_categorical(y_te,4), batch_size=100) )
+
+    #send_results(model.evaluate(x_te, to_categorical(y_te,4), batch_size=100) )
