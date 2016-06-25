@@ -1,5 +1,6 @@
-from keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D
-from keras.models import Model
+from keras.layers.convolutional import Convolution2D, MaxPooling2D, UpSampling2D
+from keras.layers import Input, Dense, Dropout, Activation, Flatten
+from keras.models import Model, Sequential
 import cPickle as pkl
 import h5py
 import numpy as np
@@ -12,48 +13,81 @@ with open ( 'logging.yaml', 'rb' ) as config:
 
 weights_filename = 'autoencoder_weights.h5'
 
-def create_deep_rbm(input_img=Input(shape=(3, 64, 64)), wfile=None):
+def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
 
     logger.debug( 'COMPILING' )
 
-    x = Convolution2D(5, 11, 11, activation='relu', border_mode='same')(input_img)
-    x = MaxPooling2D((2, 2), border_mode='same')(x)
-    x = Convolution2D(8, 5, 5, activation='relu', border_mode='same')(x)
-    x = MaxPooling2D((2, 2), border_mode='same')(x)
-    x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(x)
-    encoded = MaxPooling2D((2, 2), border_mode='same')(x)
+    model = Sequential()
+
+    # Convolution 1
+    model.add(Convolution2D(5, 11, 11, border_mode='same', input_shape=input_shape))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+
+    # Convolution 2
+    model.add(Convolution2D(8, 5, 5, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+
+    # Convolution 3
+    model.add(Convolution2D(16, 3, 3, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(3, 3), strides=(2, 2)))
+
+    # x = Convolution2D(5, 11, 11, activation='relu', border_mode='same')(input_img)
+    # x = MaxPooling2D((2, 2), border_mode='same')(x)
+    # x = Convolution2D(8, 5, 5, activation='relu', border_mode='same')(x)
+    # x = MaxPooling2D((2, 2), border_mode='same')(x)
+    # x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(x)
+    # encoded = MaxPooling2D((2, 2), border_mode='same')(x)
 
     # at this point the representation is (8, 12, 12) i.e. 1152
 
-    x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(encoded)
-    x = UpSampling2D((2, 2))(x)
-    x = Convolution2D(8, 5, 5, activation='relu', border_mode='same')(x)
-    x = UpSampling2D((2, 2))(x)
-    x = Convolution2D(5, 11, 11, activation='relu', border_mode='same')(x)
-    x = UpSampling2D((2, 2))(x)
-    decoded = Convolution2D(3, 3, 3, activation='sigmoid', border_mode='same')(x)
+    # Convolution 4
+    model.add(Convolution2D(16, 3, 3, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(UpSampling2D((2, 2)))
 
-    autoencoder = Model(input_img, decoded)
+    # Convolution 5
+    model.add(Convolution2D(8, 5, 5, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(UpSampling2D((2, 2)))
+
+    # Convolution 6
+    model.add(Convolution2D(5, 11, 11, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(UpSampling2D((2, 2)))
+
+    # Convolution 7
+    model.add(Convolution2D(3, 3, 3, border_mode='same'))
+
+    # x = Convolution2D(16, 3, 3, activation='relu', border_mode='same')(encoded)
+    # x = UpSampling2D((2, 2))(x)
+    # x = Convolution2D(8, 5, 5, activation='relu', border_mode='same')(x)
+    # x = UpSampling2D((2, 2))(x)
+    # x = Convolution2D(5, 11, 11, activation='relu', border_mode='same')(x)
+    # x = UpSampling2D((2, 2))(x)
+    # decoded = Convolution2D(3, 3, 3, activation='sigmoid', border_mode='same')(x)
+
+    # autoencoder = Model(input_img, decoded)
     if wfile:
         logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
         autoencoder.load_weights(wfile)
 
 
-    autoencoder.compile(
-            optimizer='adadelta',
+    model.compile(
+            optimizer='rmsprop',
             loss='binary_crossentropy',
             metrics=['accuracy'])
 
     logger.debug( 'DONE COMPILING' )
 
-    with open( 'rbm.config', 'wb' ) as f:
-        f.write(autoencoder.get_config())
-
-    return autoencoder
+    return model
 
 
 
 if __name__ == '__main__':
+    # load dataset
     logger.debug( "loading train" )
     testX = pkl.load(open("../data/pkl/testX.pkl"))
     np.savez_compressed('../data/pkl/test.npz', x=testX)
@@ -66,8 +100,10 @@ if __name__ == '__main__':
     x_tr=x_tr.transpose(0,3,1,2)
     x_te=x_te.transpose(0,3,1,2)
 
+    # create model
     model = create_deep_rbm()
 
+    # train model
     logger.debug( 'FITTING TRAINING SET...')
     model.fit(x_tr, x_tr, nb_epoch=50, batch_size=128, shuffle=True,
                     validation_data=(x_tr,x_tr))
