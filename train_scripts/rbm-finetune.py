@@ -19,7 +19,7 @@ def create_model(input_img=Input(shape=(3, 64, 64)), wfile=None):
     logger.debug( 'COMPILING' )
 
     model = Sequential()
-    model.add(Convolution2D(5, 11, 11, input_shape=shape
+    model.add(Convolution2D(5, 11, 11, input_shape=shape,
                 activation='relu', border_mode='same'))
     model.add(MaxPooling2D((2,2), strides=(2, 2), border_mode='same'))
     model.add(Convolution2D(8, 5, 5, activation='relu', border_mode='same'))
