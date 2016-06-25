@@ -37,12 +37,12 @@ def create_model(input_shape=(3, 64, 64), wfile=None):
         logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
         f = h5py.File(wfile)
         logger.debug( 'NUMBER OF LAYERS = %d.' % len(model.layers) )
-        model.layers[0].set_weight(f['convolution2d_1'])
-        model.layers[1].set_weight(f['maxpooling2d_1'])
-        model.layers[2].set_weight(f['convolution2d_2'])
-        model.layers[3].set_weight(f['maxpooling2d_2'])
-        model.layers[4].set_weight(f['convolution2d_3'])
-        model.layers[5].set_weight(f['maxpooling2d_3'])
+        model.layers[0].set_weights(f['convolution2d_1'])
+        model.layers[1].set_weights(f['maxpooling2d_1'])
+        model.layers[2].set_weights(f['convolution2d_2'])
+        model.layers[3].set_weights(f['maxpooling2d_2'])
+        model.layers[4].set_weights(f['convolution2d_3'])
+        model.layers[5].set_weights(f['maxpooling2d_3'])
         # for k in range(f.attrs['nb_layers']):
         #     if k >= len(model.layers):
         #         # we don't look at the last (fully-connected) layers in the savefile
