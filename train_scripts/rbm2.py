@@ -13,8 +13,8 @@ with open ( 'logging.yaml', 'rb' ) as config:
     logger = logging.getLogger('root')
 
 
-weights_filename = 'rbm_%d_weights.h5'
-final_filename = 'fine_rbm_weights.h5'
+weights_filename = 'rbm_%d_weights_top.h5'
+final_filename = 'fine_rbm_weights_top.h5'
 
 def create_rbms(input_shape=(3, 64, 64), wfiles=[]):
 
