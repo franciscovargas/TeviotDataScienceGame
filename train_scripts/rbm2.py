@@ -156,7 +156,7 @@ if __name__ == '__main__':
     y = x
     for encoder, decoder in zip(encoders, decoders):
         generator = datagen.flow(x_noisy, y, batch_size=32)
-        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=50)
+        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=30)
 
         filename = weights_filename % (i + 1)
         logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )

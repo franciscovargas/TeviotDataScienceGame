@@ -10,3 +10,10 @@ repos
 teviot.egg-info
 train_scripts/train.npy
 token
+train_scripts/test.py
+train_scripts/rbm_1_weights.h5
+train_scripts/rbm_2_weights.h5
+train_scripts/rbm_3_weights.h5
+train_scripts/fine_rbm_weights.h5
+train_scripts/info.log
+train_scripts/error.log
