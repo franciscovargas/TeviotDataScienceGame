@@ -69,7 +69,7 @@ def pop_layer(model):
 
 
 def get_results(model):
-    test = pkl.load(open("../data/pkl/test.npz" ))
+    test = np.load("../data/pkl/test.npz" )
     # align dimensions such that channels are the
     # second axis of the tensor
     x_te = test['x'].transpose(0,3,1,2)
