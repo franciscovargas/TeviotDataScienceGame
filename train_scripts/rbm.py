@@ -55,7 +55,7 @@ def create_deep_rbm(input_shape=(3, 64, 64), wfile=None):
     # autoencoder = Model(input_img, decoded)
     if wfile:
         logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
-        autoencoder.load_weights(wfile)
+        model.load_weights(wfile)
 
 
     model.compile(
