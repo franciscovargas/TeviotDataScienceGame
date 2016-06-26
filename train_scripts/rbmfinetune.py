@@ -9,10 +9,10 @@ from keras.preprocessing.image import  ImageDataGenerator
 import cPickle as pkl
 import h5py
 import numpy as np
+import pandas as pd
 import logging, logging.config, yaml
 
 from rbm import create_deep_rbm
-from subtools import create_submision
 
 
 with open ( 'logging.yaml', 'rb' ) as config:
@@ -79,9 +79,15 @@ def get_results(model):
 def submit(model=None, sub=401):
     if model is None:
         model = create_model(mfile=aft_weights)
+
+
     results = get_results(model)
     logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
-    create_submision(results, sub)
+
+    submission_example = pd.read_csv("../data/csv_lables/sample_submission4.csv")
+    submission_example["label"] = results
+    submission_example.to_csv("../data/csv_lables/sub%d.csv"%sub,index=False)
+    logger.debug( "Submitted at: " + ("../data/csv_lables/sub%d.csv"%sub) )
 
 
 if __name__ == '__main__':
