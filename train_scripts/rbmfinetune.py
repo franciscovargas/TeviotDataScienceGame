@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     datagen = ImageDataGenerator( vertical_flip=True,
             horizontal_flip=True, rotation_range=5, zoom_range=0.2)
-    datagen.fit(X_train)
+    datagen.fit(x_tr)
     logger.debug( "GENERATED" )
     generator = datagen.flow(x_tr, to_categorical(y_tr,4) , batch_size=32)
     model.fit_generator(generator,
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                         validation_data=(x_te, to_categorical(y_te,4)))
 
     logger.debug( 'SAVING WEIGHTS in file: %s' % aft_weights )
-    model.save_weights(aft_weights)
+    model.save_weights(aft_weights, overwrite=True)
 
     logger.debug( model.evaluate(x_te, to_categorical(y_te,4), batch_size=100) )
 

@@ -93,4 +93,4 @@ if __name__ == '__main__':
                     validation_data=(x_tr,x_tr))
 
     logger.debug( 'SAVING WEIGHTS in file: %s' % weights_filename )
-    model.save_weights(weights_filename)
+    model.save_weights(weights_filename, overwrite=True)
