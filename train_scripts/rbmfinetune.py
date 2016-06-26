@@ -36,7 +36,9 @@ def create_model(input_shape=(3, 64, 64), wfile=None, mfile=None):
 
     model.add(Flatten())
     # MLP
-    model.add(Dense(200, W_regularizer=l2(0.01) ))
+    model.add(Dense( 1000, W_regularizer=l2(0.01) ))
+    model.add(Activation('relu'))
+    model.add(Dense( 200, W_regularizer=l2(0.01) ))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
 
