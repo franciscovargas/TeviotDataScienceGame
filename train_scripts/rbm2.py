@@ -25,7 +25,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[]):
 
     # RBM 1
     input_img=Input(shape=input_shape)
-    f1, k1, p1 = 5, 11, 2
+    f1, k1, p1 = 10, 7, 2
 
     # encoder
     x = Convolution2D(f1, k1, k1, border_mode='same', activation='relu')(input_img)
@@ -37,7 +37,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[]):
     decoded.append(Convolution2D(f0, 1, 1, border_mode='same')(x))
 
     # RBM 2
-    f2, k2, p2 = 8, 5, 2
+    f2, k2, p2 = 20, 5, 2
 
     # encoder
     x = Convolution2D(f2, k2, k2, border_mode='same', activation='relu')(encoded[0])
@@ -49,7 +49,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[]):
     decoded.append(Convolution2D(f1, 1, 1, border_mode='same')(x))
 
     # RBM 3
-    f3, k3, p3 = 16, 3, 2
+    f3, k3, p3 = 32, 3, 2
 
     # encoder
     x = Convolution2D(f3, k3, k3, border_mode='same', activation='relu')(encoded[1])
