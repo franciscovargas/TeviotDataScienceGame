@@ -102,8 +102,8 @@ if __name__ == '__main__':
     logger.debug( "done loading train" )
 
     logger.debug( "percentage split start" )
-    x_tr, x_te, y_tr, y_te = \
-            train_test_split(x_tr, y_tr-1, test_size=0.33, random_state=42)
+    # x_tr, x_te, y_tr, y_te = \
+    #         train_test_split(x_tr, y_tr-1, test_size=0.33, random_state=42)
     logger.debug( "percentage split done" )
 
 
@@ -114,14 +114,15 @@ if __name__ == '__main__':
             horizontal_flip=True, rotation_range=5, zoom_range=0.2)
     datagen.fit(x_tr)
     logger.debug( "GENERATED" )
-    generator = datagen.flow(x_tr, to_categorical(y_tr,4) , batch_size=32)
-    model.fit_generator(generator,
-                        samples_per_epoch=len(x_tr), nb_epoch=50,
-                        validation_data=(x_te, to_categorical(y_te,4)))
+    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4) , batch_size=32)
+    # model.fit_generator(generator,
+    #                     samples_per_epoch=len(x_tr), nb_epoch=50,
+    #                     validation_data=(x_te, to_categorical(y_te,4)))
+
+    model.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=50)
 
     logger.debug( 'SAVING WEIGHTS in file: %s' % aft_weights )
     model.save_weights(aft_weights, overwrite=True)
 
-    logger.debug( model.evaluate(x_te, to_categorical(y_te,4), batch_size=100) )
-
-    #send_results(model.evaluate(x_te, to_categorical(y_te,4), batch_size=100) )
+    # logger.debug( model.evaluate(x_te, to_categorical(y_te-1,4), batch_size=100) )
+    submit(model,401)
