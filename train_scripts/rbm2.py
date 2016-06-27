@@ -6,6 +6,7 @@ from keras.regularizers import l2
 from keras.utils.np_utils import to_categorical
 import h5py
 import numpy as np
+import pandas as pd
 import logging, logging.config, yaml
 
 with open ( 'logging.yaml', 'rb' ) as config:
@@ -16,7 +17,7 @@ with open ( 'logging.yaml', 'rb' ) as config:
 weights_filename = 'rbm_%d_weights_top.h5'
 final_filename = 'fine_rbm_weights_top.h5'
 
-def create_rbms(input_shape=(3, 64, 64), wfiles=[]):
+def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
 
     logger.debug( 'COMPILING' )
 
@@ -87,6 +88,10 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[]):
         logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
         rbms[i].load_weights(wfile)
 
+    if ffile:
+        logger.debug( 'LOADING WEIGHTS from file: %s.' % ffile)
+        fullmodel.load_weights(ffile)
+
     logger.debug( 'DONE COMPILING' )
 
     return rbms, hidden, fullmodel
@@ -146,7 +151,8 @@ if __name__ == '__main__':
 
     # create model
     decoders, encoders, full = create_rbms(
-        wfiles=[weights_filename % (i + 1) for i in range(3)]
+        wfiles=[weights_filename % (i + 1) for i in range(3)],
+        ffile=final_filename
     )
 
     # train model
@@ -168,15 +174,15 @@ if __name__ == '__main__':
     #
     # logger.debug( 'Done preprocessing.' )
 
-    logger.debug( 'Start training...' )
-
-    datagen.fit(x_tr)
-    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=32)
-
-    full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=30)
-    full.save_weights( final_filename, overwrite=True )
-
-    logger.debug( 'Done training.' )
+    # logger.debug( 'Start training...' )
+    #
+    # datagen.fit(x_tr)
+    # generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=32)
+    #
+    # full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=30)
+    # full.save_weights( final_filename, overwrite=True )
+    #
+    # logger.debug( 'Done training.' )
 
     logger.debug( 'Submitting...' )
     submit(full, sub=403)
