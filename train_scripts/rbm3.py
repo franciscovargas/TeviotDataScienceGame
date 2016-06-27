@@ -2,7 +2,7 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D, UpSampling2D
 from keras.layers import Input, Dense, Dropout, Flatten
 from keras.models import Model
 from keras.preprocessing.image import  ImageDataGenerator
-from keras.regularizers import l2
+from keras.regularizers import l2, activity_l1
 from keras.utils.np_utils import to_categorical
 import h5py
 import numpy as np
@@ -14,8 +14,8 @@ with open ( 'logging.yaml', 'rb' ) as config:
     logger = logging.getLogger('root')
 
 
-weights_filename = 'rbm_%d_weights_top.h5'
-final_filename = 'fine_rbm_weights_top.h5'
+weights_filename = 'rbm_%d_weights_3.h5'
+final_filename = 'fine_rbm_weights_3.h5'
 
 def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
 
@@ -26,10 +26,13 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
 
     # RBM 1
     input_img=Input(shape=input_shape)
-    f1, k1, p1 = 10, 7, 2
+    f1, k1, p1 = 10, 11, 2
 
     # encoder
-    x = Convolution2D(f1, k1, k1, border_mode='same', activation='relu')(input_img)
+    x = Convolution2D(f1, k1, k1,
+            border_mode='same',
+            activity_regularizer=activity_l1(10e-5),
+            activation='relu')(input_img)
     encoded.append(MaxPooling2D((p1,p1), border_mode='valid')(x))
 
     # decoder
@@ -38,22 +41,30 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     decoded.append(Convolution2D(f0, 1, 1, border_mode='same')(x))
 
     # RBM 2
-    f2, k2, p2 = 20, 5, 2
+    f2, k2, p2 = 32, 7, 2
 
     # encoder
-    x = Convolution2D(f2, k2, k2, border_mode='same', activation='relu')(encoded[0])
+    x = Convolution2D(f2, k2, k2,
+            border_mode='same',
+            activity_regularizer=activity_l1(10e-5),
+            activation='relu')(encoded[0])
     encoded.append(MaxPooling2D((p2, p2), border_mode='valid')(x))
 
     # decoder
-    x = Convolution2D(f2, k2, k2, border_mode='same', activation='relu')(encoded[1])
+    x = Convolution2D(f2, k2, k2,
+            border_mode='same',
+            activation='relu')(encoded[1])
     x = UpSampling2D((p2, p2))(x)
     decoded.append(Convolution2D(f1, 1, 1, border_mode='same')(x))
 
     # RBM 3
-    f3, k3, p3 = 32, 3, 2
+    f3, k3, p3 = 64, 5, 2
 
     # encoder
-    x = Convolution2D(f3, k3, k3, border_mode='same', activation='relu')(encoded[1])
+    x = Convolution2D(f3, k3, k3,
+            border_mode='same',
+            activity_regularizer=activity_l1(10e-5),
+            activation='relu')(encoded[1])
     encoded.append(MaxPooling2D((p3, p3), border_mode='valid')(x))
 
     # decoder
@@ -64,6 +75,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # Fully connected
 
     x = Flatten()(encoded[2])
+    x = Dense(500, W_regularizer=l2(0.001), activation='relu')(x)
     x = Dense(200, W_regularizer=l2(0.01), activation='relu')(x)
     x = Dropout(0.5)(x)
     output = Dense(4, activation='softmax')(x)
@@ -145,14 +157,18 @@ if __name__ == '__main__':
 
     logger.debug( "generating data...")
     datagen = ImageDataGenerator(
-            horizontal_flip=True, rotation_range=5, zoom_range=0.2)
+            zca_whitening=True,
+            vertical_flip=True,
+            horizontal_flip=True,
+            rotation_range=5,
+            zoom_range=0.2)
     datagen.fit(x_noisy)
     logger.debug( "data generated.")
 
     # create model
     decoders, encoders, full = create_rbms(
-        wfiles=[weights_filename % (i + 1) for i in range(3)],
-        ffile=final_filename
+        # wfiles=[weights_filename % (i + 1) for i in range(3)],
+        # ffile=final_filename
     )
 
     train model
