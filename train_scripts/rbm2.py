@@ -146,32 +146,32 @@ if __name__ == '__main__':
 
     # create model
     decoders, encoders, full = create_rbms(
-        # wfiles=[weights_filename % (i + 1) for i in range(3)]
+        wfiles=[weights_filename % (i + 1) for i in range(3)]
     )
 
     # train model
-    logger.debug( 'Start pretraining...')
-
-    i = 0
-    y = x
-    for encoder, decoder in zip(encoders, decoders):
-        generator = datagen.flow(x_noisy, y, batch_size=32)
-        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=30)
-
-        filename = weights_filename % (i + 1)
-        logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
-        decoder.save_weights( filename, overwrite=True )
-        i += 1
-
-        logger.debug( 'Predicting next input...')
-        y = encoder.predict(x_noisy)
-
-    logger.debug( 'Done preprocessing.' )
+    # logger.debug( 'Start pretraining...')
+    #
+    # i = 0
+    # y = x
+    # for encoder, decoder in zip(encoders, decoders):
+    #     generator = datagen.flow(x_noisy, y, batch_size=32)
+    #     decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=30)
+    #
+    #     filename = weights_filename % (i + 1)
+    #     logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
+    #     decoder.save_weights( filename, overwrite=True )
+    #     i += 1
+    #
+    #     logger.debug( 'Predicting next input...')
+    #     y = encoder.predict(x_noisy)
+    #
+    # logger.debug( 'Done preprocessing.' )
 
     logger.debug( 'Start training...' )
 
     datagen.fit(x_tr)
-    generator = datagen.flow(x_tr, to_categorical(y_tr,4), batch_size=32)
+    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=32)
 
     full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=30)
     full.save_weights( final_filename, overwrite=True )
