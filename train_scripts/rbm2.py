@@ -155,7 +155,7 @@ if __name__ == '__main__':
         ffile=final_filename
     )
 
-    train model
+    # train model
     logger.debug( 'Start pretraining...')
 
     i = 0
