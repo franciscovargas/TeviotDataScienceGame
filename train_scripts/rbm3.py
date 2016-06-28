@@ -167,8 +167,8 @@ if __name__ == '__main__':
 
     # create model
     decoders, encoders, full = create_rbms(
-        wfiles=[weights_filename % (i + 1) for i in range(3)],
-        ffile=final_filename
+        # wfiles=[weights_filename % (i + 1) for i in range(3)],
+        # ffile=final_filename
     )
 
     # train model
