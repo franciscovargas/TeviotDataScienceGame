@@ -99,11 +99,17 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # autoencoder = Model(input_img, decoded)
     for i, wfile in enumerate(wfiles):
         logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
-        rbms[i].load_weights(wfile)
+        try:
+            rbms[i].load_weights(wfile)
+        except:
+            logger.error( 'File does not exit, or permission denied.' )
 
     if ffile:
         logger.debug( 'LOADING WEIGHTS from file: %s.' % ffile)
-        fullmodel.load_weights(ffile)
+        try:
+            fullmodel.load_weights(ffile)
+        except:
+            logger.error( 'File does not exit, or permission denied.' )
 
     logger.debug( 'DONE COMPILING' )
 
@@ -190,11 +196,13 @@ if __name__ == '__main__':
         y = x
         for encoder, decoder in zip(encoders, decoders):
             generator = datagen.flow(x_noisy, y, batch_size=100)
-            decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=15)
 
-            filename = weights_filename % (i + 1)
-            logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
-            decoder.save_weights( filename, overwrite=True )
+            if i > 1:
+                decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=15)
+
+                filename = weights_filename % (i + 1)
+                logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
+                decoder.save_weights( filename, overwrite=True )
             i += 1
 
             logger.debug( 'Predicting next input...')
