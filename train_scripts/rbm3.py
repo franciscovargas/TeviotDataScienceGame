@@ -32,7 +32,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # encoder
     x = Convolution2D(f1, k1, k1,
             border_mode='same',
-            activity_regularizer=activity_l1(10e-5),
+            activity_regularizer=activity_l1(10e-7),
             activation='relu')(input_img)
     encoded.append(MaxPooling2D((p1,p1), border_mode='valid')(x))
 
@@ -47,7 +47,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # encoder
     x = Convolution2D(f2, k2, k2,
             border_mode='same',
-            activity_regularizer=activity_l1(10e-5),
+            activity_regularizer=activity_l1(10e-7),
             activation='relu')(encoded[0])
     encoded.append(MaxPooling2D((p2, p2), border_mode='valid')(x))
 
@@ -64,7 +64,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # encoder
     x = Convolution2D(f3, k3, k3,
             border_mode='same',
-            activity_regularizer=activity_l1(10e-5),
+            activity_regularizer=activity_l1(10e-7),
             activation='relu')(encoded[1])
     encoded.append(MaxPooling2D((p3, p3), border_mode='valid')(x))
 
@@ -76,7 +76,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # Fully connected
 
     x = Flatten()(encoded[2])
-    x = Dense(500, W_regularizer=l2(0.001), activation='relu')(x)
+    x = Dense(500, activity_regularizer=activity_l1(10e-7), activation='relu')(x)
     x = Dense(200, W_regularizer=l2(0.01), activation='relu')(x)
     x = Dropout(0.5)(x)
     output = Dense(4, activation='softmax')(x)
@@ -122,7 +122,7 @@ def get_results(model, whitening=True):
     # second axis of the tensor
     x_te = test['x'].transpose(0,3,1,2)
 
-    if whittening:
+    if whitening:
         logger.debug('Whitening test data...')
     datagen = ImageDataGenerator(zca_whitening=whitening)
     datagen.fit(x_te)
@@ -197,15 +197,14 @@ if __name__ == '__main__':
         for encoder, decoder in zip(encoders, decoders):
             generator = datagen.flow(x_noisy, y, batch_size=100)
 
-            if i > 1:
-                decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=2)
+            decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=10)
 
-                filename = weights_filename % (i + 1)
-                logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
-                try:
-                    decoder.save_weights( filename, overwrite=True )
-                except:
-                    logger.error( 'Permission denied.' )
+            filename = weights_filename % (i + 1)
+            logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
+            try:
+                decoder.save_weights( filename, overwrite=True )
+            except:
+                logger.error( 'Permission denied.' )
             i += 1
 
             logger.debug( 'Predicting next input...')
