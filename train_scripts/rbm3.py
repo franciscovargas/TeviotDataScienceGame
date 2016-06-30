@@ -198,11 +198,14 @@ if __name__ == '__main__':
             generator = datagen.flow(x_noisy, y, batch_size=100)
 
             if i > 1:
-                decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=15)
+                decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=2)
 
                 filename = weights_filename % (i + 1)
                 logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
-                decoder.save_weights( filename, overwrite=True )
+                try:
+                    decoder.save_weights( filename, overwrite=True )
+                except:
+                    logger.error( 'Permission denied.' )
             i += 1
 
             logger.debug( 'Predicting next input...')
@@ -216,7 +219,10 @@ if __name__ == '__main__':
         generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
 
         full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=30)
-        full.save_weights( final_filename, overwrite=True )
+        try:
+            full.save_weights( final_filename, overwrite=True )
+        except:
+            logger.error( 'Permission denied.' )
 
         logger.debug( 'Done training.' )
 
