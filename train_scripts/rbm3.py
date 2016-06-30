@@ -197,15 +197,14 @@ if __name__ == '__main__':
         for encoder, decoder in zip(encoders, decoders):
             generator = datagen.flow(x_noisy, y, batch_size=100)
 
-            if i > 1:
-                decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=2)
+            decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=30)
 
-                filename = weights_filename % (i + 1)
-                logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
-                try:
-                    decoder.save_weights( filename, overwrite=True )
-                except:
-                    logger.error( 'Permission denied.' )
+            filename = weights_filename % (i + 1)
+            logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
+            try:
+                decoder.save_weights( filename, overwrite=True )
+            except:
+                logger.error( 'Permission denied.' )
             i += 1
 
             logger.debug( 'Predicting next input...')
