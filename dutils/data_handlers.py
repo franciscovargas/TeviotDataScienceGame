@@ -10,7 +10,8 @@ TEST_X_PKL = '../data/pkl/testX.pkl'
 TRAIN_Y_PKL = '../data/pkl/trainY.pkl'
 
 TRAIN_NPZ = '../data/pkl/train.npz'
-TEST_NPZ = '../data/pkl/train.npz'
+TEST_NPZ = '../data/pkl/test.npz'
+PTRAIN_NPZ = '../data/pkl/ptrain.npz'
 
 DEFAULT_AUGMENT_NPZ = '../data/pkl/%s_augmented.npz'
 
@@ -35,6 +36,73 @@ def pkl2npz(dset='all'):
 
         np.savez_compressed(TEST_NPZ, x=x_te)
         del x_te
+
+
+def build(dset='train', save=False):
+
+    assert dset in {'train', 'test', 'pretrain'}, (
+        "dset expected to be one of 'train', 'test' or 'pretrain'. "
+        "got %s." % dset
+    )
+
+    import os
+    import pandas as pd
+    import cv2
+    from skimage import transform
+
+    dir_conts = os.popen("ls ../data/images/roof_images").read().split("\n")[:-1]
+    all_ids = map(lambda x: x.strip(".jpg"), dir_conts)
+
+    df_all = pd.DataFrame({"k" : all_ids})
+
+    # id_train.csv  sample_submission4.csv\n",
+    df_train = pd.read_csv("../data/csv_lables/id_train.csv")
+    df_test = pd.read_csv("../data/csv_lables/sample_submission4.csv")
+
+    Index([u'k'], dtype='object')
+    df_all.keys()
+
+    df_pre = set(map(int,list(df_all["k"])))
+
+    if dset == 'train':
+        train = list()
+        for i, img_id in enumerate(list(df_train["Id"])):
+            img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
+            resized = transform.resize(img, (64, 64) ),
+            train.append(resized)
+
+        train_matrix = np.array(train)
+        trainY = df_train["label"].values
+
+        if save:
+            np.savez_compressed(TRAIN_NPZ, x=train_matrix, y=trainY)
+        return train_matrix, trainY
+
+    if dset == 'test':
+        test = list()
+        for i, img_id in enumerate(list(df_test["Id"])):
+            img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
+            resized = transform.resize(img, (64, 64) )
+            test.append(resized)
+
+        test_matrix = np.array(test)
+
+        if save:
+            np.savez_compressed(TEST_NPZ, x=test_matrix)
+        return test_matrix
+
+    if dset == 'pretrain':
+        ptrain = list()
+        for i, img_id in enumerate(df_pre):
+            img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
+            resized = transform.resize(img, (64, 64) )
+            ptrain.append(resized)
+
+        ptrain_matrix = np.asarray(ptrain)
+
+        if save:
+            np.savez_compressed(PTRAIN_NPZ, x=ptrain_matrix)
+        return ptrain_matrix
 
 
 def augment_and_save(augmented_filename=None,
