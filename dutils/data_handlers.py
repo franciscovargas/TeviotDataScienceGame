@@ -11,19 +11,21 @@ TRAIN_Y_PKL = '../data/pkl/trainY.pkl'
 
 TRAIN_NPZ = '../data/pkl/train.npz'
 TEST_NPZ = '../data/pkl/test.npz'
+
 PTRAIN_NPZ = '../data/pkl/ptrain.npz'
+
 
 DEFAULT_AUGMENT_NPZ = '../data/pkl/%s_augmented.npz'
 
 
 def pkl2npz(dset='all'):
 
-    assert dset in {'train', 'test', 'all'}, (
+    assert dset in ['train', 'test', 'all'], (
         "dset expected to be one of 'train', 'test' or 'all'. "
         "got %s." % dset
     )
 
-    if dset in {'train', 'all'}:
+    if dset in ['train', 'all']:
         x_tr = pkl.load(open(TRAIN_X_PKL, 'rb'))
         y_tr = pkl.load(open(TRAIN_Y_PKL, 'rb'))
 
@@ -31,7 +33,7 @@ def pkl2npz(dset='all'):
         del x_tr
         del y_tr
 
-    if dset in {'test', 'all'}:
+    if dset in ['test', 'all']:
         x_te = pkl.load(open(TEST_X_PKL, 'rb'))
 
         np.savez_compressed(TEST_NPZ, x=x_te)
@@ -40,15 +42,15 @@ def pkl2npz(dset='all'):
 
 def build(dset='train', save=False):
 
-    assert dset in {'train', 'test', 'pretrain'}, (
-        "dset expected to be one of 'train', 'test' or 'pretrain'. "
-        "got %s." % dset
-    )
-
     import os
     import pandas as pd
     import cv2
     from skimage import transform
+
+    assert dset in ['train', 'test', 'pretrain'], (
+        "dset expected to be one of 'train', 'test' or 'pretrain'. "
+        "got %s." % dset
+    )
 
     dir_conts = os.popen("ls ../data/images/roof_images").read().split("\n")[:-1]
     all_ids = map(lambda x: x.strip(".jpg"), dir_conts)
@@ -116,7 +118,7 @@ def augment_and_save(augmented_filename=None,
     """
 
     assert dset in ['train', 'test'], (
-        "dset expected to be one of 'train', test. "
+        "dset expected to be one of 'train', 'test'. "
         "got %s." % dset
     )
 
@@ -131,7 +133,7 @@ def augment_and_save(augmented_filename=None,
         horizontal_flip, vertical_flip, rescale, dim_ordering
     )
 
-    if dset in {'train', 'all'}:
+    if dset in ['train', 'all']:
         data = np.load(TRAIN_NPZ)
         x, y = data['x'], data['y']
 
@@ -139,10 +141,17 @@ def augment_and_save(augmented_filename=None,
         x_augment, y_augment = datagen.flow(x, y)
         np.savez_compressed(augmented_filename, x=x_augment, y=y_augment)
 
-    if dset in {'test', 'all'}:
+    if dset in ['test', 'all']:
         data = np.load(TEST_NPZ)
         x = data['x']
 
         datagen.fit(x)
         x_augment = datagen.flow(x)
         np.savez_compressed(augmented_filename, x=x_augment)
+
+
+
+if __name__=='__main__':
+    _, _ = build('train', save=True)
+    _ = build('test',save=True)
+    _ = build('pretrain', save=True)

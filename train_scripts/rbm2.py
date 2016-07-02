@@ -97,13 +97,20 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     return rbms, hidden, fullmodel
 
 
-def get_results(model):
+def get_results(model, whitening=True):
     test = np.load("../data/pkl/test.npz" )
     # align dimensions such that channels are the
     # second axis of the tensor
     x_te = test['x'].transpose(0,3,1,2)
+    if whitening:
+        logger.debug('Whitening test data...')
+    datagen = ImageDataGenerator(zca_whitening=whitening)
+    datagen.fit(x_te)
+    generator = datagen.flow(x_te, batch_size=100)
+
     logger.debug('Predicting labels...')
-    results = np.argmax(model.predict(x_te),axis=-1) +1
+    results = np.argmax(model.predict_generator(generator),axis=-1) +1
+
     return results
 
 
@@ -112,7 +119,7 @@ def submit(model=None, sub=402):
         model = create_model(mfile=aft_weights)
 
 
-    results = get_results(model)
+    results = get_results(model, whitening=True)
     logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
 
     submission_example = pd.read_csv("../data/csv_lables/sample_submission4.csv")
@@ -126,26 +133,23 @@ if __name__ == '__main__':
     logger.debug( "loading train" )
     train = np.load("../data/pkl/train.npz")
     test = np.load("../data/pkl/test.npz")
-    x_tr, y_tr = train['x'], train['t']
-    x_te = test['x']
-    x_tr=x_tr.transpose(0,3,1,2)
-    x_te=x_te.transpose(0,3,1,2)
-
-    x = np.append(x_tr, x_te, axis=0)
-
+    x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+    x = ptrain['x'].transpose(0,3,1,2)
     logger.debug( "done loading train" )
-
 
     logger.debug( "adding noise...")
     noise_factor = 0.5
     x_noisy = x + noise_factor * np.random.normal(loc=0., scale=1., size=x.shape)
-
     x_noisy = np.clip(x_noisy, 0., 1.)
     logger.debug( "noise added...")
 
     logger.debug( "generating data...")
     datagen = ImageDataGenerator(
-            horizontal_flip=True, rotation_range=5, zoom_range=0.2)
+            zca_whitening=True,
+            vertical_flip=True,
+            horizontal_flip=True,
+            rotation_range=5,
+            zoom_range=0.2)
     datagen.fit(x_noisy)
     logger.debug( "data generated.")
 

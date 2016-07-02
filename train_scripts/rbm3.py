@@ -138,7 +138,7 @@ def submit(model=None, sub=402):
     if model is None:
         model = create_model(mfile=aft_weights)
 
-    results = get_results(model)
+    results = get_results(model, whitening=True)
     logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
 
     submission_example = pd.read_csv("../data/csv_lables/sample_submission4.csv")
