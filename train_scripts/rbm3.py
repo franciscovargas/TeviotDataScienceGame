@@ -161,13 +161,9 @@ if __name__ == '__main__':
         # load dataset
         logger.debug( "loading train" )
         train = np.load("../data/pkl/train.npz")
-        test = np.load("../data/pkl/test.npz")
-        x_tr, y_tr = train['x'], train['t']
-        x_te = test['x']
-        x_tr=x_tr.transpose(0,3,1,2)
-        x_te=x_te.transpose(0,3,1,2)
-
-        x = np.append(x_tr, x_te, axis=0)
+        ptrain = np.load("../data/pkl/ptrain.npz")
+        x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+        x = ptrain['x'].transpose(0,3,1,2)
 
         logger.debug( "done loading train" )
 
@@ -217,7 +213,7 @@ if __name__ == '__main__':
         datagen.fit(x_tr)
         generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
 
-        full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=30)
+        full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=50)
         try:
             full.save_weights( final_filename, overwrite=True )
         except:

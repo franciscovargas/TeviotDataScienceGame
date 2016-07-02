@@ -59,9 +59,6 @@ def build(dset='train', save=False):
     df_train = pd.read_csv("../data/csv_lables/id_train.csv")
     df_test = pd.read_csv("../data/csv_lables/sample_submission4.csv")
 
-    Index([u'k'], dtype='object')
-    df_all.keys()
-
     df_pre = set(map(int,list(df_all["k"])))
 
     if dset == 'train':
