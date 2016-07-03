@@ -134,7 +134,8 @@ if __name__ == '__main__':
     train = np.load("../data/pkl/train.npz")
     test = np.load("../data/pkl/test.npz")
     x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
-    x = ptrain['x'].transpose(0,3,1,2)
+    x_te = test['x'].transpose(0,3,1,2)
+    x = np.append(x_tr, x_te, axis=0)
     logger.debug( "done loading train" )
 
     logger.debug( "adding noise...")
@@ -144,12 +145,7 @@ if __name__ == '__main__':
     logger.debug( "noise added...")
 
     logger.debug( "generating data...")
-    datagen = ImageDataGenerator(
-            zca_whitening=True,
-            vertical_flip=True,
-            horizontal_flip=True,
-            rotation_range=5,
-            zoom_range=0.2)
+    datagen = ImageDataGenerator(zca_whitening=True)
     datagen.fit(x_noisy)
     logger.debug( "data generated.")
 
@@ -165,8 +161,8 @@ if __name__ == '__main__':
     i = 0
     y = x
     for encoder, decoder in zip(encoders, decoders):
-        generator = datagen.flow(x_noisy, y, batch_size=32)
-        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=30)
+        generator = datagen.flow(x_noisy, y, batch_size=100)
+        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=3)
 
         filename = weights_filename % (i + 1)
         logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
@@ -181,12 +177,12 @@ if __name__ == '__main__':
     logger.debug( 'Start training...' )
 
     datagen.fit(x_tr)
-    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=32)
+    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
 
-    full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=30)
+    full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=50)
     full.save_weights( final_filename, overwrite=True )
 
     logger.debug( 'Done training.' )
 
     logger.debug( 'Submitting...' )
-    submit(full, sub=403)
+    submit(full, sub=404)

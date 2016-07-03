@@ -176,12 +176,7 @@ if __name__ == '__main__':
         logger.debug( "noise added...")
 
         logger.debug( "generating data...")
-        datagen = ImageDataGenerator(
-                zca_whitening=True,
-                vertical_flip=True,
-                horizontal_flip=True,
-                rotation_range=5,
-                zoom_range=0.2)
+        datagen = ImageDataGenerator(zca_whitening=True)
         datagen.fit(x_noisy)
         logger.debug( "data generated.")
 
