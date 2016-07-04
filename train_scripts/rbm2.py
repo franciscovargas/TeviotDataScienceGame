@@ -97,13 +97,20 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     return rbms, hidden, fullmodel
 
 
-def get_results(model):
+def get_results(model, whitening=True):
     test = np.load("../data/pkl/test.npz" )
     # align dimensions such that channels are the
     # second axis of the tensor
     x_te = test['x'].transpose(0,3,1,2)
+    if whitening:
+        logger.debug('Whitening test data...')
+    datagen = ImageDataGenerator(zca_whitening=whitening)
+    datagen.fit(x_te)
+    generator = datagen.flow(x_te, batch_size=100)
+
     logger.debug('Predicting labels...')
-    results = np.argmax(model.predict(x_te),axis=-1) +1
+    results = np.argmax(model.predict_generator(generator),axis=-1) +1
+
     return results
 
 
@@ -112,7 +119,7 @@ def submit(model=None, sub=402):
         model = create_model(mfile=aft_weights)
 
 
-    results = get_results(model)
+    results = get_results(model, whitening=True)
     logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
 
     submission_example = pd.read_csv("../data/csv_lables/sample_submission4.csv")
@@ -126,26 +133,19 @@ if __name__ == '__main__':
     logger.debug( "loading train" )
     train = np.load("../data/pkl/train.npz")
     test = np.load("../data/pkl/test.npz")
-    x_tr, y_tr = train['x'], train['t']
-    x_te = test['x']
-    x_tr=x_tr.transpose(0,3,1,2)
-    x_te=x_te.transpose(0,3,1,2)
-
+    x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+    x_te = test['x'].transpose(0,3,1,2)
     x = np.append(x_tr, x_te, axis=0)
-
     logger.debug( "done loading train" )
-
 
     logger.debug( "adding noise...")
     noise_factor = 0.5
     x_noisy = x + noise_factor * np.random.normal(loc=0., scale=1., size=x.shape)
-
     x_noisy = np.clip(x_noisy, 0., 1.)
     logger.debug( "noise added...")
 
     logger.debug( "generating data...")
-    datagen = ImageDataGenerator(
-            horizontal_flip=True, rotation_range=5, zoom_range=0.2)
+    datagen = ImageDataGenerator(zca_whitening=True)
     datagen.fit(x_noisy)
     logger.debug( "data generated.")
 
@@ -161,8 +161,8 @@ if __name__ == '__main__':
     i = 0
     y = x
     for encoder, decoder in zip(encoders, decoders):
-        generator = datagen.flow(x_noisy, y, batch_size=32)
-        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=30)
+        generator = datagen.flow(x_noisy, y, batch_size=100)
+        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=3)
 
         filename = weights_filename % (i + 1)
         logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
@@ -177,12 +177,12 @@ if __name__ == '__main__':
     logger.debug( 'Start training...' )
 
     datagen.fit(x_tr)
-    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=32)
+    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
 
-    full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=30)
+    full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=50)
     full.save_weights( final_filename, overwrite=True )
 
     logger.debug( 'Done training.' )
 
     logger.debug( 'Submitting...' )
-    submit(full, sub=403)
+    submit(full, sub=404)

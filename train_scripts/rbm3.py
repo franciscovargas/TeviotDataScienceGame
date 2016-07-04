@@ -138,7 +138,7 @@ def submit(model=None, sub=402):
     if model is None:
         model = create_model(mfile=aft_weights)
 
-    results = get_results(model)
+    results = get_results(model, whitening=True)
     logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
 
     submission_example = pd.read_csv("../data/csv_lables/sample_submission4.csv")
@@ -176,12 +176,7 @@ if __name__ == '__main__':
         logger.debug( "noise added...")
 
         logger.debug( "generating data...")
-        datagen = ImageDataGenerator(
-                zca_whitening=True,
-                vertical_flip=True,
-                horizontal_flip=True,
-                rotation_range=5,
-                zoom_range=0.2)
+        datagen = ImageDataGenerator(zca_whitening=True)
         datagen.fit(x_noisy)
         logger.debug( "data generated.")
 
