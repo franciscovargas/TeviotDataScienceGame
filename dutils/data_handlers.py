@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.matlib as ma
 
 from keras import backend as K
 from keras.preprocessing.image import  ImageDataGenerator
@@ -228,33 +229,57 @@ def zca_whitening(x, build=True, save=True):
 
     shape = x.shape
     x_flat = x.reshape((shape[0],-1))
+    m = x_flat.mean(axis=0)
+    x_flat = x_flat - ma.repmat(m, shape[0], 1)
 
     if build:
-        sigma = np.dot(x_flat, x_flat.T) / x_flat.shape[1] # correlation matrix
+        sigma = np.dot(x_flat.T, x_flat) / shape[0] # correlation matrix
         U, S, V = np.linalg.svd(sigma) # singular values decomposition
-        epsilon = .1         # whitening constant, it prevents division by zeros_like
-        zca = np.dot(np.dot(U, np.diag(1./np.sqrt(np.diag(S) + epsilon))), U.T)
+        epsilon = 10e-16         # whitening constant, it prevents division by zeros_like
+        w_zca = U.dot(np.diag(1./np.sqrt(np.diag(S+epsilon)))).dot(U.T)
         if save:
-            np.savez_compressed(ZCA_FILEPATH, zca=zca)
+            np.savez_compressed(ZCA_FILEPATH, w=w_zca)
     else:
         data = np.load(ZCA_FILEPATH)
-        zca = data['zca']
-    x_white = np.dot(zca, x_flat).reshape(shape)   # data whitening
-    return x_white, zca
+        w_zca = data['w']
+    print x_flat.shape, w_zca.shape
+    x = x_flat.dot(w_zca).reshape(shape)   # data whitening
+    
+    return x, w_zca
+
 
 
 if __name__=='__main__':
-    # build all
-    x = build('pretrain', save=False, augment=False, zca_whitening=False)
+    print 'Loading pre-training set'
+    x = np.load(PTRAIN_NPZ)['x']
+    print 'Transforming and saving pre-training set'
+    np.savez_compressed(PTRAIN_NPZ, x=zca_whitening(x, build=False, save=False)[0])
 
-    # build zca map and whiten pretrained
-    x, _ = zca_whitening(x, build=True, save=True)
+    print 'Loading testing set'
+    x = np.load(TEST_NPZ)['x']
+    print 'Transforming and saving testing set'
+    np.savez_compressed(TEST_NPZ, x=zca_whitening(x, build=False, save=False)[0])
 
-    # save all (for pretrain)
-    _ = build('pretrain', save=True, augment=False, zca_whitening=False)
+    print 'Loading training set'
+    train = np.load(TRAIN_NPZ)
+    print 'Transforming and saving training set'
+    np.savez_compressed(TRAIN_NPZ, x=zca_whitening(train['x'], build=False, save=False)[0], y=train['y'])
 
-    # build and save training set
-    _, _ = build('train', save=True, augment=True, zca_whitening=True)
 
-    # build and save test set
-    _ = build('test', save=True, augment=False, zca_whitening=True)
+
+
+# if __name__=='__main__':
+#     # build all
+#     x = build('pretrain', save=False, augment=False, zca_whitening=False)
+#  
+#     # build zca map and whiten pretrained
+#     x, _ = zca_whitening(x, build=True, save=True)
+#  
+#     # save all (for pretrain)
+#     _ = build('pretrain', save=True, augment=False, zca_whitening=False)
+#  
+#     # build and save training set
+#     _, _ = build('train', save=True, augment=True, zca_whitening=True)
+#  
+#     # build and save test set
+#     _ = build('test', save=True, augment=False, zca_whitening=True)
