@@ -87,18 +87,19 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
         rbm.compile(optimizer='adadelta', loss='binary_crossentropy',
                     metrics=['accuracy'])
 
+
+    # autoencoder = Model(input_img, decoded)
+  #  for i, wfile in enumerate(wfiles):
+  #     logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
+  #     rbms[i].load_weights(wfile)
+
+
     fullmodel = Model(input_img, output)
     fullmodel.compile(optimizer='rmsprop', loss='categorical_crossentropy',
                     metrics=['accuracy'])
     if ffile:
         logger.debug( 'LOADING WEIGHTS from file: %s.' % ffile)
         fullmodel.load_weights(ffile)
-
-    # autoencoder = Model(input_img, decoded)
-    for i, wfile in enumerate(wfiles):
-        logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
-        rbms[i].load_weights(wfile)
-
 
     logger.debug( 'DONE COMPILING' )
 
@@ -123,12 +124,9 @@ def get_results(model, whitening=True):
         logger.debug('Whitening test data...')
         w_zca = np.load(zca_filename)['w']
         x_te = whiten(x_te,  w_zca)
-    datagen = ImageDataGenerator()
-    datagen.fit(x_te)
-    generator = datagen.flow(x_te, batch_size=100)
 
     logger.debug('Predicting labels...')
-    results = np.argmax(model.predict_generator(generator),axis=-1) +1
+    results = np.argmax(model.predict(x_te),axis=-1) +1
 
     return results
 
@@ -152,7 +150,7 @@ def submit(model=None, sub=402):
 
 
 pretrain = False
-finetune = True
+finetune = False
 submit_r = True
 if __name__ == '__main__':
 
@@ -219,7 +217,7 @@ if __name__ == '__main__':
         datagen.fit(x_tr)
         generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
 
-        full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=20)
+        full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=10)
         full.save_weights( final_filename, overwrite=True )
 
         logger.debug( 'Done training.' )
