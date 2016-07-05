@@ -172,21 +172,25 @@ def augment_data(x_org, y_org=None):
             trainY.append(img_label)
 
             # flip images
-            flipped = cv2.flip(resized,0)
-            trainX.append(flipped)
+            flipped_v = cv2.flip(resized,0)
+            trainX.append(flipped_v)
             trainY.append(img_label)
 
-            # zooming
-            zoomed = cv2.resize(resized,None,fx=0.9, fy=0.9, interpolation = cv2.INTER_CUBIC)
-            zm1 = np.zeros_like(resized)
-            x = int(resized.shape[1]/2 - float(zoomed.shape[1]/2))
-            y = int(resized.shape[1]/2 - float(zoomed.shape[0]/2))
-            x_max = int(resized.shape[1]/2 + float(zoomed.shape[1]/2))
-            y_max = int(resized.shape[1]/2 + float(zoomed.shape[0]/2))
-            zm1[y:y_max, x:x_max] = zoomed
-            trainX.append(zm1)
+            flipped_h = cv2.flip(resized,1)
+            trainX.append(flipped_h)
             trainY.append(img_label)
 
+            # # zooming
+            # zoomed = cv2.resize(resized,None,fx=0.9, fy=0.9, interpolation = cv2.INTER_CUBIC)
+            # zm1 = np.zeros_like(resized)
+            # x = int(resized.shape[1]/2 - float(zoomed.shape[1]/2))
+            # y = int(resized.shape[1]/2 - float(zoomed.shape[0]/2))
+            # x_max = int(resized.shape[1]/2 + float(zoomed.shape[1]/2))
+            # y_max = int(resized.shape[1]/2 + float(zoomed.shape[0]/2))
+            # zm1[y:y_max, x:x_max] = zoomed
+            # trainX.append(zm1)
+            # trainY.append(img_label)
+            #
             # slight rotation left and right
             rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 5, 1)
             img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
@@ -197,28 +201,28 @@ def augment_data(x_org, y_org=None):
             img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
             trainX.append(img_rotation)
             trainY.append(img_label)
-
-            # rotate flipped
-            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 5, 1)
-            img_rotation = cv2.warpAffine(flipped, rotation_matrix, (num_cols, num_rows))
-            trainX.append(img_rotation)
-            trainY.append(img_label)
-
-            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), -5, 1)
-            img_rotation = cv2.warpAffine(flipped, rotation_matrix, (num_cols, num_rows))
-            trainX.append(img_rotation)
-            trainY.append(img_label)
-
-            # rotate zoomed
-            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 5, 1)
-            img_rotation = cv2.warpAffine(zm1, rotation_matrix, (num_cols, num_rows))
-            trainX.append(img_rotation)
-            trainY.append(img_label)
-
-            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), -5, 1)
-            img_rotation = cv2.warpAffine(zm1, rotation_matrix, (num_cols, num_rows))
-            trainX.append(img_rotation)
-            trainY.append(img_label)
+            #
+            # # rotate flipped
+            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 5, 1)
+            # img_rotation = cv2.warpAffine(flipped, rotation_matrix, (num_cols, num_rows))
+            # trainX.append(img_rotation)
+            # trainY.append(img_label)
+            #
+            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), -5, 1)
+            # img_rotation = cv2.warpAffine(flipped, rotation_matrix, (num_cols, num_rows))
+            # trainX.append(img_rotation)
+            # trainY.append(img_label)
+            #
+            # # rotate zoomed
+            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 5, 1)
+            # img_rotation = cv2.warpAffine(zm1, rotation_matrix, (num_cols, num_rows))
+            # trainX.append(img_rotation)
+            # trainY.append(img_label)
+            #
+            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), -5, 1)
+            # img_rotation = cv2.warpAffine(zm1, rotation_matrix, (num_cols, num_rows))
+            # trainX.append(img_rotation)
+            # trainY.append(img_label)
 
     return np.asarray(trainX), np.asarray(trainY)
 
@@ -244,7 +248,7 @@ def zca_whitening(x, build=True, save=True):
         w_zca = data['w']
     print x_flat.shape, w_zca.shape
     x = x_flat.dot(w_zca).reshape(shape)   # data whitening
-    
+
     return x, w_zca
 
 
@@ -271,15 +275,15 @@ if __name__=='__main__':
 # if __name__=='__main__':
 #     # build all
 #     x = build('pretrain', save=False, augment=False, zca_whitening=False)
-#  
+#
 #     # build zca map and whiten pretrained
 #     x, _ = zca_whitening(x, build=True, save=True)
-#  
+#
 #     # save all (for pretrain)
 #     _ = build('pretrain', save=True, augment=False, zca_whitening=False)
-#  
+#
 #     # build and save training set
 #     _, _ = build('train', save=True, augment=True, zca_whitening=True)
-#  
+#
 #     # build and save test set
 #     _ = build('test', save=True, augment=False, zca_whitening=True)
