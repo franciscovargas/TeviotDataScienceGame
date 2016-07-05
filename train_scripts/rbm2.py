@@ -4,18 +4,26 @@ from keras.models import Model
 from keras.preprocessing.image import  ImageDataGenerator
 from keras.regularizers import l2
 from keras.utils.np_utils import to_categorical
+from sklearn.cross_validation import train_test_split
 import h5py
 import numpy as np
+import numpy.matlib as ma
 import pandas as pd
 import logging, logging.config, yaml
+
 
 with open ( 'logging.yaml', 'rb' ) as config:
     logging.config.dictConfig(yaml.load(config))
     logger = logging.getLogger('root')
 
 
+
+
 weights_filename = 'rbm_%d_weights_top.h5'
 final_filename = 'fine_rbm_weights_top.h5'
+zca_filename = '../data/zca.npz'
+
+
 
 def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
 
@@ -82,19 +90,28 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     fullmodel = Model(input_img, output)
     fullmodel.compile(optimizer='rmsprop', loss='categorical_crossentropy',
                     metrics=['accuracy'])
+    if ffile:
+        logger.debug( 'LOADING WEIGHTS from file: %s.' % ffile)
+        fullmodel.load_weights(ffile)
 
     # autoencoder = Model(input_img, decoded)
     for i, wfile in enumerate(wfiles):
         logger.debug( 'LOADING WEIGHTS from file: %s.' % wfile )
         rbms[i].load_weights(wfile)
 
-    if ffile:
-        logger.debug( 'LOADING WEIGHTS from file: %s.' % ffile)
-        fullmodel.load_weights(ffile)
 
     logger.debug( 'DONE COMPILING' )
 
     return rbms, hidden, fullmodel
+
+
+
+def whiten(x, w_zca):
+    x_shape = x.shape
+    x = x.reshape((x_shape[0], -1))
+    m = ma.repmat(x.mean(axis=0), x_shape[0], 1)
+    return (x - m).dot(w_zca).reshape(x_shape) 
+
 
 
 def get_results(model, whitening=True):
@@ -104,7 +121,9 @@ def get_results(model, whitening=True):
     x_te = test['x'].transpose(0,3,1,2)
     if whitening:
         logger.debug('Whitening test data...')
-    datagen = ImageDataGenerator(zca_whitening=whitening)
+        w_zca = np.load(zca_filename)['w']
+        x_te = whiten(x_te,  w_zca)
+    datagen = ImageDataGenerator()
     datagen.fit(x_te)
     generator = datagen.flow(x_te, batch_size=100)
 
@@ -114,9 +133,10 @@ def get_results(model, whitening=True):
     return results
 
 
+
 def submit(model=None, sub=402):
     if model is None:
-        model = create_model(mfile=aft_weights)
+        model = create_model(ffile=final_filename)
 
 
     results = get_results(model, whitening=True)
@@ -128,61 +148,82 @@ def submit(model=None, sub=402):
     logger.debug( "Submitted at: " + ("../data/csv_lables/sub%d.csv"%sub) )
 
 
+
+
+
+pretrain = False
+finetune = True
+submit_r = True
 if __name__ == '__main__':
-    # load dataset
-    logger.debug( "loading train" )
-    train = np.load("../data/pkl/train.npz")
-    test = np.load("../data/pkl/test.npz")
-    x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
-    x_te = test['x'].transpose(0,3,1,2)
-    x = np.append(x_tr, x_te, axis=0)
-    logger.debug( "done loading train" )
-
-    logger.debug( "adding noise...")
-    noise_factor = 0.5
-    x_noisy = x + noise_factor * np.random.normal(loc=0., scale=1., size=x.shape)
-    x_noisy = np.clip(x_noisy, 0., 1.)
-    logger.debug( "noise added...")
-
-    logger.debug( "generating data...")
-    datagen = ImageDataGenerator(zca_whitening=True)
-    datagen.fit(x_noisy)
-    logger.debug( "data generated.")
 
     # create model
     decoders, encoders, full = create_rbms(
         wfiles=[weights_filename % (i + 1) for i in range(3)],
         ffile=final_filename
     )
+   
+    
+    w_zca = np.load(zca_filename)['w']
+    datagen = ImageDataGenerator()
 
-    # train model
-    logger.debug( 'Start pretraining...')
+    if pretrain:
+        # load dataset
+        logger.debug( "loading pre-train" )
+        
+        ptrain = np.load('../data/pkl/ptrain.npz')
+        x = ptrain['x'].transpose(0,3,1,2)
+        x = whiten(x, zca)
+        logger.debug( "done loading pre-train" )
 
-    i = 0
-    y = x
-    for encoder, decoder in zip(encoders, decoders):
-        generator = datagen.flow(x_noisy, y, batch_size=100)
-        decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=3)
+        logger.debug( "adding noise...")
+        noise_factor = 0.5
+        x_noisy = x + noise_factor * np.random.normal(loc=0., scale=1., size=x.shape)
+        x_noisy = np.clip(x_noisy, x.min(), x.max())
+        logger.debug( "noise added...")
 
-        filename = weights_filename % (i + 1)
-        logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
-        decoder.save_weights( filename, overwrite=True )
-        i += 1
+        datagen.fit(x_noisy)
 
-        logger.debug( 'Predicting next input...')
-        y = encoder.predict(x_noisy)
+        # train model
+        logger.debug( 'Start pretraining...')
 
-    logger.debug( 'Done preprocessing.' )
+        i = 0
+        y = x
+        for encoder, decoder in zip(encoders, decoders):
+            generator = datagen.flow(x_noisy, y, batch_size=100)
+            decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=5)
 
-    logger.debug( 'Start training...' )
+            filename = weights_filename % (i + 1)
+            logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
+            
+            decoder.save_weights( flename, overwrite=True )
+            i += 1
 
-    datagen.fit(x_tr)
-    generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
+            logger.debug( 'Predicting next input...')
+            y = encoder.predict(x_noisy)
 
-    full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=50)
-    full.save_weights( final_filename, overwrite=True )
+        logger.debug( 'Done preprocessing.' )
+    
 
-    logger.debug( 'Done training.' )
+    if finetune:
+        # load dataset
+        logger.debug( "loading train" )
+        
+        train = np.load('../data/pkl/train.npz')
+        x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+        x_tr = whiten(x_tr, w_zca)
+        logger.debug( "done loading train" )
 
-    logger.debug( 'Submitting...' )
-    submit(full, sub=404)
+        
+        logger.debug( 'Start training...' )
+
+        datagen.fit(x_tr)
+        generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
+
+        full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=20)
+        full.save_weights( final_filename, overwrite=True )
+
+        logger.debug( 'Done training.' )
+        
+    if submit_r:
+        logger.debug( 'Submitting...' )
+        submit(full, sub=404)
