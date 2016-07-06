@@ -2,21 +2,28 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D, UpSampling2D
 from keras.layers import Input, Dense, Dropout, Flatten
 from keras.models import Model
 from keras.preprocessing.image import  ImageDataGenerator
-from keras.regularizers import l2, activity_l1
+from keras.regularizers import activity_l1, l2
 from keras.utils.np_utils import to_categorical
+from sklearn.cross_validation import train_test_split
 import h5py
 import numpy as np
+import numpy.matlib as ma
 import pandas as pd
 import logging, logging.config, yaml
-import sys
+
 
 with open ( 'logging.yaml', 'rb' ) as config:
     logging.config.dictConfig(yaml.load(config))
     logger = logging.getLogger('root')
 
 
+
+
 weights_filename = 'rbm_%d_weights_3.h5'
 final_filename = 'fine_rbm_weights_3.h5'
+zca_filename = '../data/zca.npz'
+
+
 
 def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
 
@@ -89,7 +96,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
         rbms.append(rbm)
         hidden.append(hid)
 
-        rbm.compile(optimizer='adadelta', loss='binary_crossentropy',
+        rbm.compile(optimizer='rmsprop', loss='mse',
                     metrics=['accuracy'])
 
     fullmodel = Model(input_img, output)
@@ -116,27 +123,37 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     return rbms, hidden, fullmodel
 
 
+
+
+def whiten(x, w_zca):
+    x_shape = x.shape
+    x = x.reshape((x_shape[0], -1))
+    m = ma.repmat(x.mean(axis=0), x_shape[0], 1)
+    return (x - m).dot(w_zca).reshape(x_shape)
+
+
+
 def get_results(model, whitening=True):
     test = np.load("../data/pkl/test.npz" )
     # align dimensions such that channels are the
     # second axis of the tensor
     x_te = test['x'].transpose(0,3,1,2)
-
     if whitening:
         logger.debug('Whitening test data...')
-    datagen = ImageDataGenerator(zca_whitening=whitening)
-    datagen.fit(x_te)
-    generator = datagen.flow(x_te, batch_size=100)
+        w_zca = np.load(zca_filename)['w']
+        x_te = whiten(x_te,  w_zca)
 
     logger.debug('Predicting labels...')
-    results = np.argmax(model.predict_generator(generator),axis=-1) +1
+    results = np.argmax(model.predict(x_te),axis=-1) +1
 
     return results
 
 
+
 def submit(model=None, sub=402):
     if model is None:
-        model = create_model(mfile=aft_weights)
+        model = create_model(ffile=final_filename)
+
 
     results = get_results(model, whitening=True)
     logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
@@ -147,38 +164,39 @@ def submit(model=None, sub=402):
     logger.debug( "Submitted at: " + ("../data/csv_lables/sub%d.csv"%sub) )
 
 
+
+load_weights = True
+pretrain = True
+finetune = True
+submit_r = True
 if __name__ == '__main__':
 
-    full = None
-    if len(sys.argv) <= 1 or 'train' in sys.argv:
+    # create model
+    decoders, encoders, full = create_rbms(
+        wfiles=[weights_filename % (i + 1) for i in range(3)] if load_weights else None,
+        ffile=final_filename if load_weights else None
+    )
 
-        # create model
-        decoders, encoders, full = create_rbms(
-            wfiles=[weights_filename % (i + 1) for i in range(3)],
-            ffile=final_filename
-        )
 
+    w_zca = np.load(zca_filename)['w']
+    datagen = ImageDataGenerator()
+
+    if pretrain:
         # load dataset
-        logger.debug( "loading train" )
-        train = np.load("../data/pkl/train.npz")
-        ptrain = np.load("../data/pkl/ptrain.npz")
-        x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+        logger.debug( "loading pre-train" )
+
+        ptrain = np.load('../data/pkl/ptrain.npz')
         x = ptrain['x'].transpose(0,3,1,2)
-
-        logger.debug( "done loading train" )
-
+        x = whiten(x, w_zca)
+        logger.debug( "done loading pre-train" )
 
         logger.debug( "adding noise...")
         noise_factor = 0.5
         x_noisy = x + noise_factor * np.random.normal(loc=0., scale=1., size=x.shape)
-
-        x_noisy = np.clip(x_noisy, 0., 1.)
+        x_noisy = np.clip(x_noisy, x.min(), x.max())
         logger.debug( "noise added...")
 
-        logger.debug( "generating data...")
-        datagen = ImageDataGenerator(zca_whitening=True)
         datagen.fit(x_noisy)
-        logger.debug( "data generated.")
 
         # train model
         logger.debug( 'Start pretraining...')
@@ -187,15 +205,12 @@ if __name__ == '__main__':
         y = x
         for encoder, decoder in zip(encoders, decoders):
             generator = datagen.flow(x_noisy, y, batch_size=100)
-
             decoder.fit_generator(generator, samples_per_epoch=len(x), nb_epoch=10)
 
             filename = weights_filename % (i + 1)
             logger.debug( 'SAVING WEIGHTS in file: %s...' % filename )
-            try:
-                decoder.save_weights( filename, overwrite=True )
-            except:
-                logger.error( 'Permission denied.' )
+
+            decoder.save_weights( filename, overwrite=True )
             i += 1
 
             logger.debug( 'Predicting next input...')
@@ -203,19 +218,28 @@ if __name__ == '__main__':
 
         logger.debug( 'Done preprocessing.' )
 
+
+    if finetune:
+        # load dataset
+        logger.debug( "loading train" )
+
+        train = np.load('../data/pkl/train.npz')
+        x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+        x_tr = whiten(x_tr, w_zca)
+        logger.debug( "done loading train" )
+
+
         logger.debug( 'Start training...' )
 
         datagen.fit(x_tr)
         generator = datagen.flow(x_tr, to_categorical(y_tr-1,4), batch_size=100)
 
-        full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=50)
-        try:
-            full.save_weights( final_filename, overwrite=True )
-        except:
-            logger.error( 'Permission denied.' )
+        full.fit_generator(generator, samples_per_epoch=len(x_tr), nb_epoch=20)
+        full.save_weights( final_filename, overwrite=True )
 
         logger.debug( 'Done training.' )
 
-    if len(sys.argv) <= 1 or 'submit' in sys.argv:
+    if submit_r:
         logger.debug( 'Submitting...' )
-        submit(model=full, sub=404)
+        submit(full, sub=406)
+
