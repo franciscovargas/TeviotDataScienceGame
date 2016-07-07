@@ -117,13 +117,21 @@ def build(dset='train', save=True, augment=True, zca_whitening=True):
             n_tr = int((1-nb_val) * n)
             x_tr.append(xi[xi_ind[:n_tr]])
             x_te.append(xi[xi_ind[n_tr:]])
-            y_tr.append(yi[xi_ind[:n_rr]])
+            y_tr.append(yi[xi_ind[:n_tr]])
             y_te.append(yi[xi_ind[n_tr:]])
         
-        trainX = np.vstack(x_tr)
-        trainY = np.vstack(y_tr)
-        testX = np.vstack(x_te)
-        testY = np.vstack(y_te)
+
+        trainX = x_tr[0]
+        trainY = y_tr[0]
+        testX =  x_te[0]
+        testY =  y_te[0]
+
+        for i in xrange(3):
+            trainX = np.append(trainX, x_tr[i+1], axis=0)
+            trainY = np.append(trainY, y_tr[i+1], axis=0)
+            testX  = np.append(testX,  x_te[i+1], axis=0)
+            testY  = np.append(testY,  y_te[i+1], axis=0)
+        
 
         print 'Training set:'
         print 'x.shape = ', trainX.shape, ', y.shape = ', trainY.shape
