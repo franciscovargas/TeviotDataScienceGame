@@ -13,6 +13,7 @@ TEST_X_PKL = '../data/pkl/testX.pkl'
 TRAIN_Y_PKL = '../data/pkl/trainY.pkl'
 
 TRAIN_NPZ = '../data/pkl/train.npz'
+VALID_NPZ = '../data/pkl/valid.npz'
 TEST_NPZ = '../data/pkl/test.npz'
 PTRAIN_NPZ = '../data/pkl/ptrain.npz'
 
@@ -47,8 +48,8 @@ def build(dset='train', save=True, augment=True, zca_whitening=True):
     import os
     import pandas as pd
 
-    assert dset in ['train', 'test', 'pretrain'], (
-        "dset expected to be one of 'train', 'test' or 'pretrain'. "
+    assert dset in ['train', 'valid', 'test', 'pretrain'], (
+        "dset expected to be one of 'train', 'valid', 'test' or 'pretrain'. "
         "got %s." % dset
     )
 
@@ -90,7 +91,60 @@ def build(dset='train', save=True, augment=True, zca_whitening=True):
         elif save:
             np.savez_compressed(TRAIN_NPZ, x=trainX, y=trainY)
         return trainX, trainY
+    
+    if dset == 'valid':
+        trainX, trainY = list(), list()
+        for img_id, img_label in zip(list(df_train["Id"]), list(df_train["label"])):
+            img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
+            resized = transform.resize(img, (64, 64) ),
 
+            trainX.append(resized[0])
+            trainY.append(img_label)
+
+        trainX = np.asarray(trainX)
+        trainY = np.asarray(trainY)
+       
+
+        nb_val = .4
+        
+        x_tr, x_te, y_tr, y_te = [], [], [], []
+        for i in xrange(4):
+            xi, yi = trainX[trainY==(i+1)], trainY[trainY==(i+1)]
+            n = xi.shape[0]
+            xi_ind = np.arange(n)
+            np.random.shuffle(xi_ind)
+            
+            n_tr = int((1-nb_val) * n)
+            x_tr.append(xi[xi_ind[:n_tr]])
+            x_te.append(xi[xi_ind[n_tr:]])
+            y_tr.append(yi[xi_ind[:n_rr]])
+            y_te.append(yi[xi_ind[n_tr:]])
+        
+        trainX = np.vstack(x_tr)
+        trainY = np.vstack(y_tr)
+        testX = np.vstack(x_te)
+        testY = np.vstack(y_te)
+
+        print 'Training set:'
+        print 'x.shape = ', trainX.shape, ', y.shape = ', trainY.shape
+        print 'Validation set:'
+        print 'x.shape = ', testX.shape, ', y.shape = ', testY.shape
+
+        if augment:
+            trainX, trainY = augment_data(trainX, trainY)
+            print 'Augmnented train: x.shape = ', trainX.shape, ', y.shape = ', trainY.shape
+
+        if zca_whitening:
+            trainX, _ = zca_whitening(trainX, build=False, save=False)
+            testX, _ = zca_whitening(testX, build=False, save=False)
+            if save:
+                np.savez_compressed(DEFAULT_ZCA_NPZ % dset, x_tr=trainX, y_tr=trainY, x_te=testX, y_te=testX)
+
+        elif save:
+            np.savez_compressed(VALID_NPZ, x_tr=trainX, y_tr=trainY, x_te=testX, y_te=testY)
+        return trainX, trainY, testX, testY
+
+    
     if dset == 'test':
         test = list()
         for i, img_id in enumerate(list(df_test["Id"])):
@@ -277,7 +331,10 @@ if __name__=='__main__':
      # _ = build('pretrain', save=True, augment=False, zca_whitening=False)
 
      # build and save training set
-     _, _ = build('train', save=True, augment=True, zca_whitening=False)
-
+     # _, _ = build('train', save=True, augment=True, zca_whitening=False)
+     
+     # build and save validation set
+     _, _ = build('valid', save=True, augment=True, zca_whitening=False)
+     
      # build and save test set
      # _ = build('test', save=True, augment=False, zca_whitening=True)

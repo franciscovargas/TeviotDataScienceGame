@@ -70,7 +70,7 @@ for img_id in unsupervised:
 unsupervised_matrix = np.array(unsupervised_list)
 print unsupervised_matrix.shape
 
-np.savez("../data/pkl/unsupervisedX.npz",x=unsupervised_matrix)
+np.savez_compressed("../data/pkl/unsupervisedX.npz",x=unsupervised_matrix)
 
 # In[9]:
 
@@ -119,7 +119,7 @@ for img_id, img_label in zip(list(df_train["Id"]), list(df_train["label"])):
     train.append(img_rotation)
     trainY.append(img_label)
 
-    zoomed = cv2.resize(resized,None,fx=0.8, fy=0.8, interpolation = cv2.INTER_CUBIC)
+    zoomed = cv2.resize(resized,None,fx=0.9, fy=0.9, interpolation = cv2.INTER_CUBIC)
     zm1 = np.zeros_like(resized)
     x = int(resized.shape[1]/2 - float(zoomed.shape[1]/2))
     y = int(resized.shape[1]/2 - float(zoomed.shape[0]/2))
