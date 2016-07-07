@@ -1,8 +1,8 @@
 cython
 keras
-theano
-pandas
+#theano
+#pandas
 # numpy
 scikit-image
-scikit-learn
+#scikit-learn
 # scipy
