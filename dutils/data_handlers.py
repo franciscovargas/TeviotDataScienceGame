@@ -43,7 +43,7 @@ def pkl2npz(dset='all'):
         del x_te
 
 
-def build(dset='train', save=True, augment=True, zca_whitening=True):
+def build(dset='train', img_shape=(64, 64), save=True, augment=True, zca_whitening=True):
 
     import os
     import pandas as pd
@@ -68,7 +68,7 @@ def build(dset='train', save=True, augment=True, zca_whitening=True):
         trainX, trainY = list(), list()
         for img_id, img_label in zip(list(df_train["Id"]), list(df_train["label"])):
             img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
-            resized = transform.resize(img, (64, 64) ),
+            resized = transform.resize(img, img_shape ),
 
             trainX.append(resized[0])
             trainY.append(img_label)
@@ -96,7 +96,7 @@ def build(dset='train', save=True, augment=True, zca_whitening=True):
         trainX, trainY = list(), list()
         for img_id, img_label in zip(list(df_train["Id"]), list(df_train["label"])):
             img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
-            resized = transform.resize(img, (64, 64) ),
+            resized = transform.resize(img, img_shape ),
 
             trainX.append(resized[0])
             trainY.append(img_label)
@@ -157,7 +157,7 @@ def build(dset='train', save=True, augment=True, zca_whitening=True):
         test = list()
         for i, img_id in enumerate(list(df_test["Id"])):
             img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
-            resized = transform.resize(img, (64, 64) )
+            resized = transform.resize(img, img_shape )
             test.append(resized)
 
         testX = np.array(test)
@@ -178,7 +178,7 @@ def build(dset='train', save=True, augment=True, zca_whitening=True):
         ptrain = list()
         for i, img_id in enumerate(df_pre):
             img = cv2.imread("../data/images/roof_images/" + str(img_id) + ".jpg")
-            resized = transform.resize(img, (64, 64) )
+            resized = transform.resize(img, img_shape )
             ptrain.append(resized)
 
         ptrainX = np.asarray(ptrain)
@@ -267,15 +267,15 @@ def augment_data(x_org, y_org=None):
             # trainY.append(img_label)
             
             # slight rotation left and right
-            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 20, 1)
-            img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
-            trainX.append(img_rotation)
-            trainY.append(img_label)
+            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 20, 1)
+            # img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
+            # trainX.append(img_rotation)
+            # trainY.append(img_label)
 
-            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), -20, 1)
-            img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
-            trainX.append(img_rotation)
-            trainY.append(img_label)
+            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), -20, 1)
+            # img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
+            # trainX.append(img_rotation)
+            # trainY.append(img_label)
             
             # # rotate flipped
             # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 5, 1)
@@ -302,20 +302,21 @@ def augment_data(x_org, y_org=None):
     return np.asarray(trainX), np.asarray(trainY)
 
 
-ZCA_FILEPATH = '../data/zca.npz'
+ZCA_FILEPATH = '../data/zca2.npz'
 
 def zca_whitening(x, build=True, save=True):
 
     shape = x.shape
-    x_flat = x.reshape((shape[0],-1))
+    n = shape[0]
+    x_flat = x.reshape((n, -1))
     m = x_flat.mean(axis=0)
-    x_flat = x_flat - ma.repmat(m, shape[0], 1)
+    x_flat = x_flat - m
 
     if build:
-        sigma = np.dot(x_flat.T, x_flat) / shape[0] # correlation matrix
-        U, S, V = np.linalg.svd(sigma) # singular values decomposition
-        epsilon = 10e-16         # whitening constant, it prevents division by zeros_like
-        w_zca = U.dot(np.diag(1./np.sqrt(np.diag(S+epsilon)))).dot(U.T)
+        C = np.dot(x_flat.T, x_flat) / n # correlation matrix
+        U, S, V = np.linalg.svd(C) # singular values decomposition
+        epsilon = 10e-17         # whitening constant, it prevents division by zeros_like
+        w_zca = U.dot(np.diag(1./np.sqrt(S+epsilon))).dot(U.T)
         if save:
             np.savez_compressed(ZCA_FILEPATH, w=w_zca)
     else:
@@ -329,20 +330,20 @@ def zca_whitening(x, build=True, save=True):
 
 
 if __name__=='__main__':
-     # build all
-     # x = build('pretrain', save=False, augment=False, zca_whitening=False)
+    # build all
+    # x = build('pretrain', save=False, augment=False, zca_whitening=False)
 
-     # build zca map and whiten pretrained
-     # x, _ = zca_whitening(x, build=True, save=True)
+    # build zca map and whiten pretrained
+    # x, _ = zca_whitening(x, build=True, save=True)
 
-     # save all (for pretrain)
-     # _ = build('pretrain', save=True, augment=False, zca_whitening=False)
+    # save all (for pretrain)
+    # _ = build('pretrain', img_shape=(64, 64), save=True, augment=False, zca_whitening=False)
 
-     # build and save training set
-     # _, _ = build('train', save=True, augment=True, zca_whitening=False)
+    # build and save training set
+    _, _ = build('train', img_shape=(64, 64), save=True, augment=True, zca_whitening=False)
      
-     # build and save validation set
-     _, _ = build('valid', save=True, augment=True, zca_whitening=False)
+    # build and save validation set
+    _, _, _, _ = build('valid', img_shape=(64, 64), save=True, augment=True, zca_whitening=False)
      
-     # build and save test set
-     # _ = build('test', save=True, augment=False, zca_whitening=True)
+    # build and save test set
+    # _ = build('test', img_shape=(64, 64), save=True, augment=False, zca_whitening=False)
