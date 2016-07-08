@@ -239,8 +239,8 @@ def augment_data(x_org, y_org=None):
                 augmentX.append(img_rotation)
                 augmentY.append(y0)
 
-
-        for resized, img_label in zip(augmentX, augmentY):
+	pangle, nangle = np.random.normal(20, 4, len(augmentX)), np.random.normal(20, 4, len(augmentX))
+        for i, (resized, img_label) in enumerate(zip(augmentX, augmentY)):
 
             # add original images
             trainX.append(resized)
@@ -267,15 +267,15 @@ def augment_data(x_org, y_org=None):
             # trainY.append(img_label)
             
             # slight rotation left and right
-            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 20, 1)
-            # img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
-            # trainX.append(img_rotation)
-            # trainY.append(img_label)
+            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), pangle[i], 1)
+            img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
+            trainX.append(img_rotation)
+            trainY.append(img_label)
 
-            # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), -20, 1)
-            # img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
-            # trainX.append(img_rotation)
-            # trainY.append(img_label)
+            rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), nangle[i], 1)
+            img_rotation = cv2.warpAffine(resized, rotation_matrix, (num_cols, num_rows))
+            trainX.append(img_rotation)
+            trainY.append(img_label)
             
             # # rotate flipped
             # rotation_matrix = cv2.getRotationMatrix2D((num_cols/2, num_rows/2), 5, 1)
