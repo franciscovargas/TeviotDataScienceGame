@@ -1,0 +1,1 @@
+python vgg_elu.py &> final.log && python vgg_elu1.py &> final1.log && python vgg_elu2.py &> final2.log 

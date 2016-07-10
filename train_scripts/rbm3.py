@@ -39,7 +39,6 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # encoder
     x = Convolution2D(f1, k1, k1,
             border_mode='same',
-            activity_regularizer=activity_l1(10e-7),
             activation='relu')(input_img)
     encoded.append(MaxPooling2D((p1,p1), border_mode='valid')(x))
 
@@ -54,7 +53,6 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # encoder
     x = Convolution2D(f2, k2, k2,
             border_mode='same',
-            activity_regularizer=activity_l1(10e-7),
             activation='relu')(encoded[0])
     encoded.append(MaxPooling2D((p2, p2), border_mode='valid')(x))
 
@@ -71,19 +69,20 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
     # encoder
     x = Convolution2D(f3, k3, k3,
             border_mode='same',
-            activity_regularizer=activity_l1(10e-7),
             activation='relu')(encoded[1])
     encoded.append(MaxPooling2D((p3, p3), border_mode='valid')(x))
 
     # decoder
-    x = Convolution2D(f3, k3, k3, border_mode='same', activation='relu')(encoded[2])
+    x = Convolution2D(f3, k3, k3,
+            border_mode='same',
+            activation='relu')(encoded[2])
     x = UpSampling2D((p2, p2))(x)
     decoded.append(Convolution2D(f2, 1, 1, border_mode='same')(x))
 
     # Fully connected
 
     x = Flatten()(encoded[2])
-    x = Dense(500, activity_regularizer=activity_l1(10e-7), activation='relu')(x)
+    x = Dense(500, activation='relu')(x)
     x = Dense(200, W_regularizer=l2(0.01), activation='relu')(x)
     x = Dropout(0.5)(x)
     output = Dense(4, activation='softmax')(x)
@@ -96,7 +95,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
         rbms.append(rbm)
         hidden.append(hid)
 
-        rbm.compile(optimizer='rmsprop', loss='mse',
+        rbm.compile(optimizer='adadelta', loss='binary_crossentropy',
                     metrics=['accuracy'])
 
     fullmodel = Model(input_img, output)

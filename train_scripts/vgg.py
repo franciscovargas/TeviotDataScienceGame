@@ -118,5 +118,5 @@ X_train, X_test, y_train, y_test = train_test_split(trainX, trainY-1,
                                                     random_state=42)
 print "percentage split done"
 
-model.fit(X_train, to_categorical(y_train,4) , batch_size=100, nb_epoch=45, validation_data=(X_test,to_categorical(y_test,4)) )
-print model.evaluate(X_test, to_categorical(y_test,4), batch_size=100)
+model.fit(X_train, to_categorical(y_train,4) , batch_size=100, nb_epoch=45, validation_data=(X_test,to_categorical(y_test,4)), show_accuracy=True)
+print model.evaluate(X_test, to_categorical(y_test,4), batch_size=100, show_accuracy=True)

@@ -1,0 +1,43 @@
+Using Theano backend.
+Using gpu device 0: GeForce GTX 980 Ti (CNMeM is disabled, cuDNN 5005)
+/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/keras/models.py:396: UserWarning: The "show_accuracy" argument is deprecated, instead you should pass the "accuracy" metric to the model at compile time:
+`model.compile(optimizer, loss, metrics=["accuracy"])`
+  warnings.warn('The "show_accuracy" argument is deprecated, '
+Error allocating 1284505600 bytes of device memory (out of memory). Driver report 1018728448 bytes free and 6442254336 bytes total 
+COMPILING
+LAYERS:  [<keras.layers.convolutional.ZeroPadding2D object at 0x7f1036bec210>, <keras.layers.convolutional.Convolution2D object at 0x7f1036a91650>, <keras.layers.convolutional.ZeroPadding2D object at 0x7f1036a66c50>, <keras.layers.convolutional.Convolution2D object at 0x7f1036a82350>, <keras.layers.convolutional.MaxPooling2D object at 0x7f1036a8a290>, <keras.layers.core.Flatten object at 0x7f103212bbd0>, <keras.layers.core.Dense object at 0x7f10320c8850>, <keras.layers.core.Activation object at 0x7f10320cf450>, <keras.layers.core.Dropout object at 0x7f10320cfed0>, <keras.layers.core.Dense object at 0x7f103212bf50>, <keras.layers.core.Activation object at 0x7f1032106590>]
+COMPILED
+loading train
+done loading train
+percentage split start
+percentage split done
+Train on 6400 samples, validate on 1600 samples
+Epoch 1/45
+Traceback (most recent call last):
+  File "vgg.py", line 121, in <module>
+    model.fit(X_train, to_categorical(y_train,4) , batch_size=100, nb_epoch=45, validation_data=(X_test,to_categorical(y_test,4)), show_accuracy=True)
+  File "/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/keras/models.py", line 413, in fit
+    sample_weight=sample_weight)
+  File "/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/keras/engine/training.py", line 1082, in fit
+    callback_metrics=callback_metrics)
+  File "/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/keras/engine/training.py", line 801, in _fit_loop
+    outs = f(ins_batch)
+  File "/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/keras/backend/theano_backend.py", line 531, in __call__
+    return self.function(*inputs)
+  File "/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/theano/compile/function_module.py", line 871, in __call__
+    storage_map=getattr(self.fn, 'storage_map', None))
+  File "/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/theano/gof/link.py", line 314, in raise_with_op
+    reraise(exc_type, exc_value, exc_trace)
+  File "/home/kaggleteviot/theano-env/local/lib/python2.7/site-packages/theano/compile/function_module.py", line 859, in __call__
+    outputs = self.fn()
+MemoryError: Error allocating 1284505600 bytes of device memory (out of memory).
+Apply node that caused the error: GpuElemwise{Composite{(i0 * (i1 + Abs(i1)))},no_inplace}(CudaNdarrayConstant{[[[[ 0.5]]]]}, GpuElemwise{Add}[(0, 0)].0)
+Toposort index: 115
+Inputs types: [CudaNdarrayType(float32, (True, True, True, True)), CudaNdarrayType(float32, 4D)]
+Inputs shapes: [(1, 1, 1, 1), (100, 64, 224, 224)]
+Inputs strides: [(0, 0, 0, 0), (3211264, 50176, 224, 1)]
+Inputs values: [CudaNdarray([[[[ 0.5]]]]), 'not shown']
+Outputs clients: [[GpuContiguous(GpuElemwise{Composite{(i0 * (i1 + Abs(i1)))},no_inplace}.0)]]
+
+HINT: Re-running with most Theano optimization disabled could give you a back-trace of when this node was created. This can be done with by setting the Theano flag 'optimizer=fast_compile'. If that does not work, Theano optimizations can be disabled with 'optimizer=None'.
+HINT: Use the Theano flag 'exception_verbosity=high' for a debugprint and storage map footprint of this apply node.

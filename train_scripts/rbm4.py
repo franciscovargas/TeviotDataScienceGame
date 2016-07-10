@@ -1,3 +1,7 @@
+# in this script we use rotation of +/- 20 degrees, instead of +/- 5 degrees
+# also change the l2 regularization of the last layer
+# same as 410 without zca less dropout
+
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, UpSampling2D
 from keras.layers import Input, Dense, Dropout, Flatten
 from keras.models import Model
@@ -18,10 +22,24 @@ with open ( 'logging.yaml', 'rb' ) as config:
 
 
 
+# setup
+load_weights_pt = True
+load_weights_ft = False
+pretrain = True
+finetune = True
+validate = True
+submit_r = True
 
-weights_filename = 'rbm_%d_weights_4.h5'
-final_filename = 'fine_rbm_weights_4.h5'
+# parameters
+nb_epochs_train = 30
+nb_epochs_ptrain = 20
+nb_sub = 415
+zca = False
+
+weights_filename = 'rbm_%d_weights_' + str(nb_sub) + '.h5'
+final_filename = 'fine_rbm_weights_%d.h5' % nb_sub
 zca_filename = '../data/zca.npz'
+
 
 
 
@@ -81,8 +99,8 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
 
     x = Flatten()(encoded[2])
     x = Dropout(0.1)(x)
-    x = Dense(500, W_regularizer=l2(0.01), activation='relu')(x)
-    x = Dense(200, W_regularizer=l2(0.01), activation='relu')(x)
+    x = Dense(500, W_regularizer=l2(0.05), activation='relu')(x)
+    x = Dense(200, W_regularizer=l2(0.05), activation='relu')(x)
     x = Dropout(0.5)(x)
     output = Dense(4, activation='softmax')(x)
 
@@ -94,7 +112,7 @@ def create_rbms(input_shape=(3, 64, 64), wfiles=[], ffile=None):
         rbms.append(rbm)
         hidden.append(hid)
 
-        rbm.compile(optimizer='rmsprop', loss='mse',
+        rbm.compile(optimizer='rmsprop', loss='mean_squared_error',
                     metrics=['accuracy'])
 
     fullmodel = Model(input_img, output)
@@ -131,7 +149,7 @@ def whiten(x, w_zca):
 
 
 
-def get_results(model, whitening=True):
+def get_results(model, whitening=zca):
     test = np.load("../data/pkl/test.npz" )
     # align dimensions such that channels are the
     # second axis of the tensor
@@ -148,12 +166,12 @@ def get_results(model, whitening=True):
 
 
 
-def submit(model=None, sub=402):
+def submit(model=None, sub=None):
     if model is None:
         model = create_model(ffile=final_filename)
 
 
-    results = get_results(model, whitening=True)
+    results = get_results(model)
     logger.debug('Saving labels in file "../data/csv_lables/sub%d.csv"' % sub)
 
     submission_example = pd.read_csv("../data/csv_lables/sample_submission4.csv")
@@ -162,18 +180,9 @@ def submit(model=None, sub=402):
     logger.debug( "Submitted at: " + ("../data/csv_lables/sub%d.csv"%sub) )
 
 
-# setup
-load_weights = True
-pretrain = True
-finetune = True
-validate = True
-submit_r = True
 
-# parameters
-nb_epochs_train = 20
-nb_epochs_ptrain = 20
-valid_split = .3
-nb_sub = 405
+
+
 
 submit_r = submit_r and not validate
 
@@ -181,8 +190,8 @@ if __name__ == '__main__':
 
     # create model
     decoders, encoders, full = create_rbms(
-        wfiles=[weights_filename % (i + 1) for i in range(3)] if load_weights else None,
-        ffile=final_filename if load_weights else None
+        wfiles=[weights_filename % (i + 1) for i in range(3)] if load_weights_pt else [],
+        ffile=final_filename if load_weights_ft else None
     )
 
 
@@ -195,13 +204,14 @@ if __name__ == '__main__':
 
         ptrain = np.load('../data/pkl/ptrain.npz')
         x = ptrain['x'].transpose(0,3,1,2)
-        x = whiten(x, w_zca)
+        if zca:
+            x = whiten(x, w_zca)
         logger.debug( "done loading pre-train" )
 
         logger.debug( "adding noise...")
         noise_factor = 0.5
         x_noisy = x + noise_factor * np.random.normal(loc=0., scale=1., size=x.shape)
-        x_noisy = np.clip(x_noisy, x.min(), x.max())
+        # x_noisy = np.clip(x_noisy, x.min(), x.max())
         logger.debug( "noise added...")
 
         datagen.fit(x_noisy)
@@ -231,17 +241,21 @@ if __name__ == '__main__':
         # load dataset
         logger.debug( "loading train" )
 
-        train = np.load('../data/pkl/train.npz')
-        x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
-        x_tr = whiten(x_tr, w_zca)
-        logger.debug( "done loading train" )
-        
         if validate:
-            logger.debug( "percentage split start" )
-            x_tr, x_te, y_tr, y_te = train_test_split(x_tr, y_tr,
-                                                      test_size=valid_split,
-                                                      random_state=42)
-            logger.debug( "percentage split done" )
+            valid = np.load('../data/pkl/valid.npz')
+            x_tr, y_tr = valid['x_tr'].transpose(0,3,1,2), valid['y_tr']
+            x_te, y_te = valid['x_te'].transpose(0,3,1,2), valid['y_te']
+        else:
+            train = np.load('../data/pkl/train1.npz')
+            x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+
+        if zca:
+            x_tr = whiten(x_tr, w_zca)
+            if validate:
+                x_te = whiten(x_te, w_zca)
+
+        logger.debug( "done loading train" )
+       
 
         logger.debug( 'Start training...' )
 

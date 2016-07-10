@@ -8,6 +8,8 @@ from keras.utils.np_utils import to_categorical
 import numpy as np
 import pandas as pd
 import logging, logging.config, yaml
+from dutils.laplace import *
+
 
 with open ( 'logging.yaml', 'rb' ) as config:
     logging.config.dictConfig(yaml.load(config))
@@ -16,6 +18,15 @@ with open ( 'logging.yaml', 'rb' ) as config:
 
 weights_filename = 'rbm_%d_weights_top.h5'
 final_filename = 'fine_rbm_weights_top.h5'
+
+LoG = gen_lap()
+
+weight = np.array([LoG for c in range(3)])
+weights = np.array([weight for c in range(10)])
+
+
+
+
 
 def create_rbms(input_shape=(3, 64, 64)):
 
@@ -41,7 +52,7 @@ def create_rbms(input_shape=(3, 64, 64)):
     f2, k2, p2 = 20, 5, 2
 
     # encoder
-    x = Convolution2D(f2, k2, k2, border_mode='same', activation='relu')(encoded[0])
+    x = Convolution2D(f2, k2, k2, border_mode='same', activation='relu' )(encoded[0])
     encoded.append(MaxPooling2D((p2, p2), border_mode='valid')(x))
 
     # decoder
@@ -76,7 +87,7 @@ def create_rbms(input_shape=(3, 64, 64)):
         rbms.append(rbm)
         hidden.append(hid)
 
-        rbm.compile(optimizer='adadelta', loss='binary_crossentropy',
+        rbm.compile(optimizer='rmsprop', loss='mean_squared_error',
                     metrics=['accuracy'])
 
     fullmodel = Model(input_img, output)
@@ -115,11 +126,17 @@ def submit(model=None, sub=402):
 if __name__ == '__main__':
     # load dataset
     logger.debug( "loading train" )
-    train = np.load("../data/pkl/train.npz")
-    unsupervised = np.load("../data/pkl/ptrain.npz")
+    train = np.load("../data/pkl/trainXY.npz")
+    unsupervised = np.load("../data/pkl/unsupervisedX.npz")
     x_tr, y_tr = train['x'].transpose(0,3,1,2), train['y']
+    print x_tr.shape
     x_un = unsupervised['x'].transpose(0,3,1,2)
+    print x_un.shape
     logger.debug( "done loading train" )
+    ptrain = np.load("../data/pkl/ptrain.npz" )
+    # align dimensions such that channels are the
+    # second axis of the tensor
+    x_pt = ptrain['x'].transpose(0,3,1,2)
 
     # create model
     decoders, encoders, full = create_rbms()
@@ -127,14 +144,14 @@ if __name__ == '__main__':
     # train model
     logger.debug( 'Start pretraining...')
 
-    y = x_un
+    y = x_pt
     for encoder, decoder in zip(encoders, decoders):
-        decoder.fit(x_un, y, nb_epoch=5,
+        decoder.fit(x_pt, y, nb_epoch=20,
                 batch_size=100,
                 shuffle=True)
 
         logger.debug( 'Predicting next input...')
-        y = encoder.predict(x_un)
+        y = encoder.predict(x_pt)
 
     logger.debug( 'Done preprocessing.' )
 
@@ -145,4 +162,4 @@ if __name__ == '__main__':
     logger.debug( 'Done training.' )
 
     logger.debug( 'Submitting...' )
-    submit(full, sub=996)
+    submit(full, sub=00066)
